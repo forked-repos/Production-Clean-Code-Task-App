@@ -17,7 +17,7 @@ export interface ITokenDecodingOptions {
 
 export interface ITokenHandler {
     generateToken(payload: Payload, secret?: string, opts?: ITokenEncodingOptions): Promise<string>;
-    verifyAndDecodeToken(candidateToken: string, secret: string, opts?: ITokenDecodingOptions): Payload;
+    verifyAndDecodeToken(candidateToken: string, secret: string, opts?: ITokenDecodingOptions): Promise<Payload>;
 }
 
 export default class JwtAdapter implements ITokenHandler {
@@ -53,6 +53,4 @@ export default class JwtAdapter implements ITokenHandler {
             });
         });
     }
-
-
 }

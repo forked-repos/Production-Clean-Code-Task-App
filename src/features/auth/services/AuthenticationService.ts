@@ -3,6 +3,7 @@ import { IHashHandler } from '../../../common/operations/hashing/adapters/Hashin
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from './../../../common/operations/tokens/adapters/TokenAdapter';
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';
 import { AuthenticationErrors } from '../errors/errors';
+import { ApplicationErrors } from '../../../common/errors/errors';
 
 export interface ITokenPayload {
     id: string;
@@ -36,40 +37,40 @@ export default class AuthenticationService implements IAuthenticationService {
     public async hashPassword(plainTextPassword: string, rounds: number = 12): Promise<string> {
         try {
             const salt = await this.hashHandler.generateSalt(rounds);
-            const hash = await this.hashHandler.generateHash(plainTextPassword, salt);
-            return hash;
+            return await this.hashHandler.generateHash(plainTextPassword, salt);
         } catch (e) {
-            throw new Error('Unrecoverable');
+            throw ApplicationErrors.UnexpectedError.create();
         }
     }
 
     public async checkHashMatch(candidate: string, hash: string): Promise<boolean> {
         try {
-            const isMatch = await this.hashHandler.compareAgainstHash(candidate, hash);
-            return isMatch;
+            return await this.hashHandler.compareAgainstHash(candidate, hash);
         } catch (e) {
-            throw new Error('Unrecoverable');
+            throw ApplicationErrors.UnexpectedError.create();
         }
     }
 
     public async generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): Promise<string> {
         try {
-            const token = await this.tokenHandler.generateToken(payload, 'my-secret', opts)
-            return token;
+            return await this.tokenHandler.generateToken(payload, 'my-secret', opts)
         } catch (e) {
-            throw new Error('Unrecoverable');
+            throw ApplicationErrors.UnexpectedError.create();
         }
     }
     
     public async verifyAndDecodeAuthToken(candidateToken: string, opts?: ITokenDecodingOptions): Promise<ITokenPayload> {
         try {
-            const decoded = await this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts);
-            return decoded as ITokenPayload;
+            return await this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts) as ITokenPayload;
         } catch (e) {
-            if (e instanceof TokenErrors.CouldNotDecodeTokenError)
-                throw new Error('Unrecoverable');
-
-            throw AuthenticationErrors.AuthorizationError.create();
+            switch (true) {
+                case e instanceof TokenErrors.CouldNotDecodeTokenError:
+                    throw ApplicationErrors.UnexpectedError.create();
+                case e instanceof TokenErrors.TokenExpiredError:
+                    throw AuthenticationErrors.AuthorizationError.create();
+                default:
+                    throw ApplicationErrors.UnexpectedError.create();
+            }
         }
     }
 }
