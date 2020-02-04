@@ -3,7 +3,7 @@ import { User } from './../../models/domain/userDomain';
 import UserResponseDTO from './../../dtos/egress/userResponseDTO';
 
 export const mappers = {
-    toUserResponseDTO:(user: User): UserResponseDTO {
+    toUserResponseDTO(user: User): UserResponseDTO {
         return {
             user: {
                 id: user.id,
