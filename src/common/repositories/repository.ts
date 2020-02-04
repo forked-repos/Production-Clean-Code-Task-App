@@ -3,5 +3,5 @@
  */
 export interface IRepository<T> {
     exists(t: T): Promise<boolean>;
-    exists(id: number): Promise<boolean>;
+    existsById(id: number): Promise<boolean>;
 }
