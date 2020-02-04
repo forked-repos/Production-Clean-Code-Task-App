@@ -33,7 +33,7 @@ export namespace CreateUserErrors {
             return new EmailTakenError({
                 errorCode: ErrorCode.EMAIL_TAKEN_ERROR,
                 domain: 'Users',
-                message: dataOrDefault('The provided username is already in use.', message)
+                message: dataOrDefault('The provided email address is already in use.', message)
             });
         }
 
