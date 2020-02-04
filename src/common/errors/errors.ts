@@ -37,7 +37,7 @@ export interface IDomainError {
  * Different reasons that may have led to the error. 
  * For mapping purposes.
  */
-enum ErrorCausationReason {
+export enum ErrorCausationReason {
     DATA_NON_EXISTENT,
     BAD_DATA_PROVIDED,
     UNRECOVERABLE_FAILURE,
