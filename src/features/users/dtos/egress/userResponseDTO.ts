@@ -6,6 +6,5 @@ export default interface UserResponseDTO {
         username: string;
         biography: string;
         email: string;
-        password: string;
     }
 }
