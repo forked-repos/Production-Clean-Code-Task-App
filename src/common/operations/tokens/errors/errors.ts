@@ -31,4 +31,14 @@ export namespace TokenErrors {
             }, expiredAt);
         }
     }
+
+    export class InvalidTokenError extends BaseErrors.ApplicationError {
+        private constructor (payload: IApplicationErrorPayload) { super(payload); }
+
+        public static create(message?: string): InvalidTokenError {
+            return new InvalidTokenError({
+                message: dataOrDefault('The provided token was invalid.', message),
+            });
+        }
+    }
 }

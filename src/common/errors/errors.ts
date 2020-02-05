@@ -41,6 +41,7 @@ export enum ErrorCausationReason {
     DATA_NON_EXISTENT,
     BAD_DATA_PROVIDED,
     UNRECOVERABLE_FAILURE,
+    NOT_AUTHORIZED,
     UNKNOWN_ERROR
 }
 

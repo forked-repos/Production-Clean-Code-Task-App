@@ -2,7 +2,7 @@ import { IHashHandler } from '../../../common/operations/hashing/adapters/Bcrypt
 
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';
-import { AuthenticationErrors } from '../errors/errors';
+import { AuthorizationErrors } from '../errors/errors';
 import { ApplicationErrors } from '../../../common/errors/errors';
 
 export interface ITokenPayload {
@@ -67,7 +67,7 @@ export default class AuthenticationService implements IAuthenticationService {
                 case e instanceof TokenErrors.CouldNotDecodeTokenError:
                     throw ApplicationErrors.UnexpectedError.create();
                 case e instanceof TokenErrors.TokenExpiredError:
-                    throw AuthenticationErrors.AuthorizationError.create();
+                    throw AuthorizationErrors.AuthorizationError.create();
                 default:
                     throw ApplicationErrors.UnexpectedError.create();
             }
