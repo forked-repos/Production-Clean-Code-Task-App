@@ -1,6 +1,6 @@
 import { IHashHandler } from '../../../common/operations/hashing/adapters/BcryptAdapter';
 
-import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from './../../../common/operations/tokens/adapters/TokenAdapter';
+import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';
 import { AuthenticationErrors } from '../errors/errors';
 import { ApplicationErrors } from '../../../common/errors/errors';
