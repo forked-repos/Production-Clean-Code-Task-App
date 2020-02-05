@@ -1,8 +1,7 @@
-import { mock, instance, when, anything, spy } from 'ts-mockito';
 import bcryptjs from 'bcryptjs';
 
 // SUT:
-import BcryptAdapter, { IHashHandler } from "./BcryptAdapter";
+import BcryptAdapter from "./BcryptAdapter";
 import { HashingErrors } from '../errors/errors';
 
 describe('BcryptAdapter', () => {
