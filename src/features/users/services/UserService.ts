@@ -9,6 +9,7 @@ import { UserValidators } from '../validation/userValidation';
 import { CommonErrors } from '../../../common/errors/errors';
 import { userFactory } from '../models/domain/userDomain';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
+import { CreateUserErrors } from '../errors/errors';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -34,6 +35,12 @@ export default class UserService implements IUserService {
             this.userRepository.existsByUsername(userDTO.username),
             this.userRepository.existsByEmail(userDTO.email)
         ]) as [boolean, boolean];
+
+        if (usernameTaken)
+            Promise.reject(CreateUserErrors.UsernameTakenError.create());
+        
+        if (emailTaken)
+            Promise.reject(CreateUserErrors.EmailTakenError.create());
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
