@@ -175,7 +175,6 @@ describe('ApplicationErrors', () => {
                     message: 'An unexpected error has occurred.'
                 });
             });
-        })
-    })
-    
-})
+        });
+    });
+});
