@@ -27,7 +27,7 @@ export namespace TokenErrors {
 
         public static create(expiredAt: Date, message?: string): TokenExpiredError  {
             return new TokenExpiredError({
-                message: dataOrDefault('The token is expired', message)
+                message: dataOrDefault('The token is expired.', message)
             }, expiredAt);
         }
     }
