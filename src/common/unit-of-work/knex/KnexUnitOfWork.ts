@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-import { IUnitOfWork, IUnitOfWorkFactory } from './unit-of-work';
+import { IUnitOfWork, IUnitOfWorkFactory } from '../unit-of-work';
 
 /**
  * Represents a consistent business transaction with Knex in which all parts must
@@ -21,7 +21,7 @@ export class KnexUnitOfWork implements IKnexUnitOfWork {
     }
 
     public async rollback(): Promise<void> {
-        this.trxContext.rollback();
+        await this.trxContext.rollback();
     }
 }
 
