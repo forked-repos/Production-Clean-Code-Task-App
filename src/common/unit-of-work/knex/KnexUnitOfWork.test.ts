@@ -1,7 +1,7 @@
-import { mock, instance, verify } from 'ts-mockito';
+import { mock, instance, verify, when } from 'ts-mockito';
 
 import Knex from 'knex';
-import { KnexUnitOfWork } from "./KnexUnitOfWork";
+import { KnexUnitOfWorkFactory, KnexUnitOfWork } from "./KnexUnitOfWork";
 
 describe('KnexUnitOfWork', () => {
     test('should have all required properties', () => {
@@ -35,4 +35,23 @@ describe('KnexUnitOfWork', () => {
         // Assert
         verify(trxContextMock.rollback()).once();
     });
+});
+
+describe('KnexUnitOfWorkFactory', () => {
+    describe('create', () => {
+        test('should create a KnexUnitOfWork with the correct properties', async () => {
+            // Arrange
+            const knex = mock<Knex>();
+            const knexUoWFactory = new KnexUnitOfWorkFactory(instance(knex));
+            when(knex.transaction()).thenResolve({} as Knex.Transaction);
+
+            // Act
+            const knexUnitOfWork = await knexUoWFactory.create();
+
+            // Assert
+            expect(knexUnitOfWork).toBeInstanceOf(KnexUnitOfWork);
+            expect(knexUnitOfWork.trxContext).not.toBe(undefined);
+            expect(knexUnitOfWork.trxContext).toEqual({});
+        });
+    }); 
 });
