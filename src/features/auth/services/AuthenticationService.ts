@@ -1,4 +1,4 @@
-import { IHashHandler } from '../../../common/operations/hashing/adapters/HashingAdapter';
+import { IHashHandler } from '../../../common/operations/hashing/adapters/BcryptAdapter';
 
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from './../../../common/operations/tokens/adapters/TokenAdapter';
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';

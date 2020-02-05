@@ -4,7 +4,7 @@
   "description": "Clean-er coding tactics",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --maxWorkers=1"
   },
   "author": "Jamie Corkhill",
   "license": "ISC",
@@ -23,6 +23,7 @@
     "@types/node": "^13.7.0",
     "jest": "^25.1.0",
     "ts-jest": "^25.2.0",
+    "ts-mockito": "^2.5.0",
     "typescript": "^3.7.5"
   }
 }
