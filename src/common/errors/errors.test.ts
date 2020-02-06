@@ -150,12 +150,12 @@ describe('ApplicationErrors', () => {
                 const reason = 'UnexpectedError';
     
                 // Act
-                const error = ApplicationErrors.UnexpectedError.create(domain, message);
+                const error = ApplicationErrors.UnexpectedError.create(message);
     
                 // Assert
                 expect(error.serializeError()).toEqual({
                     errorCode: ErrorCode.UNEXPECTED_ERROR,
-                    domain,
+                    domain: 'Unknown',
                     reason,
                     message
                 });

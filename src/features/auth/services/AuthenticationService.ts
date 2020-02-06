@@ -1,9 +1,11 @@
 import { IHashHandler } from '../../../common/operations/hashing/adapters/BcryptAdapter';
-
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
+
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';
 import { AuthorizationErrors } from '../errors/errors';
 import { ApplicationErrors } from '../../../common/errors/errors';
+
+import { Either, right, left } from '../../../utils/logic/Either';
 
 export interface ITokenPayload {
     id: string;
@@ -17,10 +19,10 @@ export interface IAuthenticationService {
     checkHashMatch(candidate: string, hash: string): Promise<boolean>;
 
     /** Generates an auth token with the specified payload and options. */
-    generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): Promise<string>;
+    generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string;
 
     /** Verifies that a token is valid, returns the payload response. */
-    verifyAndDecodeAuthToken(token: string, opts?: ITokenDecodingOptions): Promise<ITokenPayload>;
+    verifyAndDecodeAuthToken(token: string, opts?: ITokenDecodingOptions): Either<AuthorizationErrors.AuthorizationError, ITokenPayload>;
 }
 
 /**
@@ -39,7 +41,7 @@ export default class AuthenticationService implements IAuthenticationService {
             const salt = await this.hashHandler.generateSalt(rounds);
             return await this.hashHandler.generateHash(plainTextPassword, salt);
         } catch (e) {
-            throw ApplicationErrors.UnexpectedError.create();
+            return Promise.reject(ApplicationErrors.UnexpectedError.create());
         }
     }
 
@@ -47,27 +49,30 @@ export default class AuthenticationService implements IAuthenticationService {
         try {
             return await this.hashHandler.compareAgainstHash(candidate, hash);
         } catch (e) {
-            throw ApplicationErrors.UnexpectedError.create();
+            return Promise.reject(ApplicationErrors.UnexpectedError.create());
         }
     }
 
-    public async generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): Promise<string> {
+    public generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string {
         try {
-            return await this.tokenHandler.generateToken(payload, 'my-secret', opts)
+            return this.tokenHandler.generateToken(payload, 'my-secret', opts)
         } catch (e) {
             throw ApplicationErrors.UnexpectedError.create();
         }
     }
     
-    public async verifyAndDecodeAuthToken(candidateToken: string, opts?: ITokenDecodingOptions): Promise<ITokenPayload> {
+    public verifyAndDecodeAuthToken(
+        candidateToken: string, 
+        opts?: ITokenDecodingOptions
+    ): Either<AuthorizationErrors.AuthorizationError, ITokenPayload> {
         try {
-            return await this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts) as ITokenPayload;
+            return right(this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts) as ITokenPayload);
         } catch (e) {
             switch (true) {
                 case e instanceof TokenErrors.CouldNotDecodeTokenError:
                     throw ApplicationErrors.UnexpectedError.create();
                 case e instanceof TokenErrors.TokenExpiredError:
-                    throw AuthorizationErrors.AuthorizationError.create();
+                    return left(AuthorizationErrors.AuthorizationError.create());
                 default:
                     throw ApplicationErrors.UnexpectedError.create();
             }
