@@ -1,9 +1,10 @@
 import { BaseErrors } from "../../../common/errors/errors";
 import { IDomainErrorPayload, ErrorCausationReason } from './../../../common/errors/errors';
-import { dataOrDefault } from './../../../utils/logic/dataOrDefault';
 
 export namespace CreateUserErrors {
-    enum ErrorCode {
+    const domain = 'Users';
+
+    export enum ErrorCode {
         USERNAME_TAKEN_ERROR = 'ERR_UNAME_TAKEN',
         EMAIL_TAKEN_ERROR = 'ERR_EMAIL_TAKEN'
     };
@@ -13,11 +14,11 @@ export namespace CreateUserErrors {
             super(payload);
         }
 
-        public static create(message?: string): UsernameTakenError {
+        public static create(): UsernameTakenError {
             return new UsernameTakenError({
                 errorCode: ErrorCode.USERNAME_TAKEN_ERROR,
-                domain: 'Users',
-                message: dataOrDefault('The provided username is already in use.', message)
+                domain,
+                message: 'The provided username is already in use.'
             });
         }
 
@@ -29,11 +30,11 @@ export namespace CreateUserErrors {
             super(payload);
         }
 
-        public static create(message?: string): EmailTakenError {
+        public static create(): EmailTakenError {
             return new EmailTakenError({
                 errorCode: ErrorCode.EMAIL_TAKEN_ERROR,
-                domain: 'Users',
-                message: dataOrDefault('The provided email address is already in use.', message)
+                domain,
+                message: 'The provided email address is already in use.'
             });
         }
 
