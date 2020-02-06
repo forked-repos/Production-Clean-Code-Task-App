@@ -48,4 +48,18 @@ export default class UserService implements IUserService {
 
         await this.userRepository.addUser(user);
     }
+
+    public async deleteUserById(id: string): Promise<void> {
+        const unitOfWork = await this.unitOfWorkFactory.create();
+        const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
+        const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
+
+        try {
+            await boundUserRepository.removeUserById(id);
+            await boundTaskRepository.removeTasksByOwnerId(id);
+            await unitOfWork.commit();
+        } catch (e) {
+            await unitOfWork.rollback();
+        }
+    }
 }
