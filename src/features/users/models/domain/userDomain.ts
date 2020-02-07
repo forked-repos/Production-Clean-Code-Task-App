@@ -11,7 +11,7 @@ export interface User {
     password: string;
 }
 
-export const userFactory = (userProps: Omit<User, 'id'>): User => ({
-    id: 'constant',
+export const userFactory = (userProps: Omit<User, 'id'>, id: string): User => ({
+    id: id ? id : 'constant',
     ...userProps
 })

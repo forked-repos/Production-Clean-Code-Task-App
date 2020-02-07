@@ -4,5 +4,4 @@ export default interface UpdateUserDTO {
     username?: string;
     biography?: string;
     email?: string;
-    password?: string;
 }

@@ -6,13 +6,16 @@ import CreateUserDTO from './../dtos/ingress/createUserDTO';
 
 import { UserValidators } from '../validation/userValidation';
 import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
-import { userFactory } from '../models/domain/userDomain';
+import { userFactory, User } from '../models/domain/userDomain';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
 import { CreateUserErrors } from '../errors/errors';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
 import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
 import { AuthorizationErrors } from '../../auth/errors/errors';
+import UpdateUserDTO from '../dtos/ingress/updateUserDTO';
+import UserResponseDTO from '../dtos/egress/userResponseDTO';
+import { mappers } from '../mappers/domain-egress-dto/mappers';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -53,7 +56,7 @@ export default class UserService implements IUserService {
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
-        const user = userFactory({ ...userDTO, password: hash });
+        const user: User = { id: 'create-an-id', ...userDTO, password: hash };
 
         await this.userRepository.addUser(user);
     }
@@ -86,6 +89,34 @@ export default class UserService implements IUserService {
                     return Promise.reject(ApplicationErrors.UnexpectedError.create('Users'));
             }
         }
+    }
+
+    public async findUserById(id: string): Promise<UserResponseDTO> {
+        const user = await this.userRepository.findUserById(id);
+        return mappers.toUserResponseDTO(user);
+    }
+
+    public async updateUserById(id: string, updateUserDTO: UpdateUserDTO): Promise<void> {
+        const validateResult = this.dataValidator.validate(UserValidators.updateUser, updateUserDTO);
+
+        if (validateResult.isLeft())
+            return Promise.reject(CommonErrors.ValidationError.create('Users', validateResult.value));
+
+        if (updateUserDTO.email) {
+            const isEmailTaken = await this.userRepository.existsByEmail(updateUserDTO.email);
+            if (isEmailTaken) return Promise.reject(CreateUserErrors.EmailTakenError.create());
+        }
+        
+        if (updateUserDTO.username) {
+            const isUsernameTaken = await this.userRepository.existsByUsername(updateUserDTO.username);
+            if (isUsernameTaken) return Promise.reject(CreateUserErrors.UsernameTakenError.create());
+        }
+
+        const user = await this.userRepository.findUserById(id);
+
+        const updatedUser: User = { ...user, ...updateUserDTO, password: user.password };
+
+        await this.userRepository.updateUser(updatedUser);
     }
 
     public async deleteUserById(id: string): Promise<void> {
