@@ -1,22 +1,26 @@
 
-import { IUserRepository } from './../repositories/UserRepository';
-import { User } from './../models/domain/userDomain';
-import { IUnitOfWork, IUnitOfWorkFactory } from './../../../common/unit-of-work/unit-of-work';
-import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
-import { Task } from './../../tasks/models/domain/taskDomain';
+import { IUserRepository } from '../repositories/UserRepository';
+import { User } from '../models/domain/userDomain';
+import { IUnitOfWork, IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
+import { ITaskRepository } from '../../tasks/repositories/TaskRepository';
+import { Task } from '../../tasks/models/domain/taskDomain';
 import { IAuthenticationService } from '../../auth/services/AuthenticationService';
-import { ITokenPayload } from './../../auth/services/AuthenticationService';
+import { ITokenPayload } from '../../auth/services/AuthenticationService';
 import { ITokenDecodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
 import { Either, left } from '../../../utils/logic/Either';
-import { ITokenEncodingOptions } from './../../../common/operations/tokens/adapters/JwtAdapter';
+import { ITokenEncodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
 import { AuthorizationErrors } from '../../auth/errors/errors';
-import { IDataValidator } from './../../../common/operations/validation/validation';
+import { IDataValidator } from '../../../common/operations/validation/validation';
 import UserService, { IUserService } from './UserService';
-import { right } from './../../../utils/logic/Either';
+import { right } from '../../../utils/logic/Either';
 import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
 
 class FakeUserRepository implements IUserRepository {
     public users: User[] = [];
+
+    private baseFindUser() {
+
+    }
 
     async existsByUsername(username: string): Promise<boolean> {
         return !!this.users.filter(user => user.username === username)[0];

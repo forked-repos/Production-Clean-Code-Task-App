@@ -2,25 +2,25 @@ import { when, mock, anything, instance, verify, deepEqual } from 'ts-mockito';
 
 // Authentication
 import { IAuthenticationService } from '../../auth/services/AuthenticationService';
-import { ITokenPayload } from './../../auth/services/AuthenticationService';
-import { ITokenEncodingOptions, ITokenDecodingOptions } from './../../../common/operations/tokens/adapters/JwtAdapter';
+import { ITokenPayload } from '../../auth/services/AuthenticationService';
+import { ITokenEncodingOptions, ITokenDecodingOptions } from '../../../common/operations/tokens/adapters/JwtAdapter';
 import { AuthorizationErrors } from '../../auth/errors/errors';
 
 // Repository & UoW
-import { IUserRepository } from './../repositories/UserRepository';
-import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
-import { IUnitOfWork, IUnitOfWorkFactory } from './../../../common/unit-of-work/unit-of-work';
+import { IUserRepository } from '../repositories/UserRepository';
+import { ITaskRepository } from '../../tasks/repositories/TaskRepository';
+import { IUnitOfWork, IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
 
 // Service & Service DTOs
 import UserService, { IUserService } from './UserService';
-import CreateUserDTO from './../dtos/ingress/createUserDTO';
+import CreateUserDTO from '../dtos/ingress/createUserDTO';
 
 // Domain Models
-import { User } from './../models/domain/userDomain';
-import { Task } from './../../tasks/models/domain/taskDomain';
+import { User } from '../models/domain/userDomain';
+import { Task } from '../../tasks/models/domain/taskDomain';
 
 // Validation
-import { IDataValidator } from './../../../common/operations/validation/validation';
+import { IDataValidator } from '../../../common/operations/validation/validation';
 
 // Errors
 import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
@@ -29,7 +29,7 @@ import { CreateUserErrors } from '../errors/errors';
 // Utils
 import { Either, left, right } from '../../../utils/logic/Either';
 import { UserValidators } from '../validation/userValidation';
-import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
+import UserCredentialsDTO from '../dtos/ingress/userCredentialsDTO';
 
 const mockCreateUserDTO: CreateUserDTO = {
     firstName: 'John',

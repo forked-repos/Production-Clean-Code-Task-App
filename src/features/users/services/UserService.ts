@@ -1,25 +1,38 @@
-import { IUserRepository } from './../repositories/UserRepository';
+// Services
 import { IAuthenticationService } from '../../auth/services/AuthenticationService';
+
+// Repositories & UoW
+import { IUserRepository } from './../repositories/UserRepository';
+import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
 import { IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
 
+// DTOs - Ingress
 import CreateUserDTO from './../dtos/ingress/createUserDTO';
-
-import { UserValidators } from '../validation/userValidation';
-import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
-import { userFactory, User } from '../models/domain/userDomain';
-import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
-import { CreateUserErrors } from '../errors/errors';
-import { IDataValidator } from '../../../common/operations/validation/validation';
-import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
-import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
-import { AuthorizationErrors } from '../../auth/errors/errors';
 import UpdateUserDTO from '../dtos/ingress/updateUserDTO';
+import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
+
+// DTOs - Egress
 import UserResponseDTO from '../dtos/egress/userResponseDTO';
+import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
+
+// Domain
+import { userFactory, User } from '../models/domain/userDomain';
+
+// Errors
+import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
+import { AuthorizationErrors } from '../../auth/errors/errors';
+import { CreateUserErrors } from '../errors/errors';
+
+// Misc
+import { UserValidators } from '../validation/userValidation';
+import { IDataValidator } from '../../../common/operations/validation/validation';
 import { mappers } from '../mappers/domain-egress-dto/mappers';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
     loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO>;
+    findUserById(id: string): Promise<UserResponseDTO>;
+    updateUserById(id: string, updateUser: UpdateUserDTO): Promise<void>;
     deleteUserById(id: string): Promise<void>;
 }
 
