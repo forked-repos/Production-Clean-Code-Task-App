@@ -135,7 +135,7 @@ describe('UserService', () => {
 
                 // Assert
                 const expectedPersistedUser: User = {
-                    id: 'constant',
+                    id: 'create-an-id',
                     ...mockCreateUserDTO,
                     password: hashedPassword
                 };
