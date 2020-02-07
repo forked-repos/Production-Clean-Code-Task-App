@@ -4,17 +4,19 @@ import { IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
 
 import CreateUserDTO from './../dtos/ingress/createUserDTO';
 
-import { validate } from './../../../utils/wrappers/joi/joiWrapper';
 import { UserValidators } from '../validation/userValidation';
-import { CommonErrors } from '../../../common/errors/errors';
+import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
 import { userFactory } from '../models/domain/userDomain';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
 import { CreateUserErrors } from '../errors/errors';
 import { IDataValidator } from '../../../common/operations/validation/validation';
+import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
+import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
+import { AuthorizationErrors } from '../../auth/errors/errors';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
-
+    loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO>;
     deleteUserById(id: string): Promise<void>;
 }
 
@@ -54,6 +56,36 @@ export default class UserService implements IUserService {
         const user = userFactory({ ...userDTO, password: hash });
 
         await this.userRepository.addUser(user);
+    }
+
+    public async loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO> {
+        const validationResult = this.dataValidator.validate(UserValidators.userCredentials, credentialsDTO);
+
+        if (validationResult.isLeft())
+            return Promise.reject(CommonErrors.ValidationError.create('Users', validationResult.value));
+
+        const { email, password } = credentialsDTO;
+
+        try {
+            // Throws NotFoundError if no user is found by the specified email address.
+            const user = await this.userRepository.findUserByEmail(email);
+            const isAuthorized = await this.authService.checkHashMatch(password, user.password);
+
+            if (!isAuthorized)
+                return Promise.reject(AuthorizationErrors.AuthorizationError.create('Users'));
+
+            const token = this.authService.generateAuthToken({ id: user.id }, { expiresIn: '15 minutes' });
+
+            return { token };
+        } catch (e) {
+            switch (true) {
+                case e instanceof AuthorizationErrors.AuthorizationError:
+                case e instanceof CommonErrors.NotFoundError:
+                    return Promise.reject(AuthorizationErrors.AuthorizationError.create('Users'));
+                default:
+                    return Promise.reject(ApplicationErrors.UnexpectedError.create('Users'));
+            }
+        }
     }
 
     public async deleteUserById(id: string): Promise<void> {

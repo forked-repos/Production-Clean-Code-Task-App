@@ -136,10 +136,10 @@ export namespace ApplicationErrors {
     export class UnexpectedError extends BaseErrors.DomainError {
         private constructor (payload: IDomainErrorPayload) { super(payload); }
 
-        public static create(message?: string): UnexpectedError {
+        public static create(domain?: string, message?: string): UnexpectedError {
             return new UnexpectedError({
                 errorCode: ErrorCode.UNEXPECTED_ERROR,
-                domain: 'Unknown', 
+                domain: dataOrDefault('Unknown', domain), 
                 message: dataOrDefault('An unexpected error has occurred.', message)
             });
         }

@@ -29,6 +29,7 @@ import { CreateUserErrors } from '../errors/errors';
 // Utils
 import { Either, left, right } from '../../../utils/logic/Either';
 import { UserValidators } from '../validation/userValidation';
+import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
 
 const mockCreateUserDTO: CreateUserDTO = {
     firstName: 'John',
@@ -140,6 +141,166 @@ describe('UserService', () => {
                 };
 
                 verify(mockUserRepository.addUser(deepEqual(expectedPersistedUser))).once();
+            });
+        });
+    });
+
+    describe('signUpUser', () => {
+        const mockCredentialsDTO: UserCredentialsDTO = {
+            email: 'email',
+            password: 'password'
+        };
+
+        describe('with malformed credentials data', () => {
+            test('should reject with a ValidationError', async () => {
+                // Arrange
+                const errorMessage = 'A message.';
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(left(errorMessage));
+
+                // Act, Expert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(CommonErrors.ValidationError.create('User', errorMessage));
+            });
+        });       
+        
+        describe('with incorrect login information', () => {
+            test('should reject with AuthorizationError if user does not exist by email', async () => {
+                // Arrange
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenReject(CommonErrors.NotFoundError.create());
+
+                // Act, Assert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(AuthorizationErrors.AuthorizationError.create('User'));
+            });
+
+            test('should reject with an AuthorizationError if passwords do not match', async () => {
+                // Arrange
+                const actualPassword = 'password-hash';
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenResolve({
+                        id: '123',
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        email: 'john.doe@live.com',
+                        username: 'JDoe',
+                        biography: 'Lorem ipsum',
+                        password: actualPassword
+                    });
+                when(mockAuthService.checkHashMatch(mockCredentialsDTO.password, actualPassword))
+                    .thenResolve(false);
+                
+
+                // Act, Assert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(AuthorizationErrors.AuthorizationError.create('Users'));
+            });        
+            
+        });
+
+        describe('with AuthenticationService errors', () => {
+            test('should reject with UnexpectedError if passwords can not be compared', async () => {
+                // Arrange
+                const actualPassword = 'correct-hash';
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenResolve({
+                        id: '123',
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        email: 'john.doe@live.com',
+                        username: 'JDoe',
+                        biography: 'Lorem ipsum',
+                        password: actualPassword
+                    });
+                when(mockAuthService.checkHashMatch(mockCredentialsDTO.password, actualPassword))
+                    .thenReject(ApplicationErrors.UnexpectedError.create());
+
+                // Act, Assert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(ApplicationErrors.UnexpectedError.create('Users'));
+            });
+
+            test('should reject with UnexpectedError if token can not be generated', async () => {
+                const actualPassword = 'correct-hash';
+                const userID = '123';
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenResolve({
+                        id: userID,
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        email: 'john.doe@live.com',
+                        username: 'JDoe',
+                        biography: 'Lorem ipsum',
+                        password: actualPassword
+                    });
+                when(mockAuthService.checkHashMatch(mockCredentialsDTO.password, actualPassword))
+                    .thenResolve(true);
+                when(mockAuthService.generateAuthToken(deepEqual({ id: userID }), anything()))
+                    .thenThrow(ApplicationErrors.UnexpectedError.create('Users'));
+
+                // Act, Assert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(ApplicationErrors.UnexpectedError.create('Users'));
+            });
+        });
+
+        describe('with UserRepository errors', () => {
+            test('should reject with UnexpectedError if data layer throws error', async () => {
+                // Arrange
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenThrow(new Error());
+                
+                // Act, Assert
+                await expect(userService.loginUser(mockCredentialsDTO))
+                    .rejects
+                    .toEqual(ApplicationErrors.UnexpectedError.create('Users'));
+            });
+        });     
+        
+        describe('with correct login information', () => {
+            test('should return a new token with correct expiry options', async () => {
+                // Arrange
+                const token = 'token';
+                const actualPassword = 'correct-hash';
+                const userID = '123';
+                when(mockDataValidator.validate(UserValidators.userCredentials, mockCredentialsDTO))
+                    .thenReturn(right(mockCredentialsDTO));
+                when(mockUserRepository.findUserByEmail(mockCredentialsDTO.email))
+                    .thenResolve({
+                        id: userID,
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        email: 'john.doe@live.com',
+                        username: 'JDoe',
+                        biography: 'Lorem ipsum',
+                        password: actualPassword
+                    });
+                when(mockAuthService.checkHashMatch(mockCredentialsDTO.password, actualPassword))
+                    .thenResolve(true);
+                when(mockAuthService.generateAuthToken(deepEqual({ id: userID }), deepEqual({ expiresIn: '15 minutes'}))) 
+                    .thenReturn(token);
+
+                // Act
+                const receivedToken = await userService.loginUser(mockCredentialsDTO);
+
+                // Assert
+                expect(receivedToken).toEqual({token});
             });
         });
     });

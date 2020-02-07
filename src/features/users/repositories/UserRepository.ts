@@ -9,6 +9,7 @@ import { IDomainPersistenceMapper } from './../../../common/mappers/domain-dal/m
 export interface IUserRepository extends IRepository<User>, IUnitOfWorkCapable {
     existsByUsername(username: string): Promise<boolean>;
     existsByEmail(email: string): Promise<boolean>;
+    findUserByEmail(email: string): Promise<User>;
     addUser(user: User): Promise<void>;
     removeUserById(id: string): Promise<void>;
 }
@@ -26,6 +27,13 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
         return this.handleErrors(async (): Promise<void> => {
             const dalUser = this.mapper.toPersistence(user);
             await this.users.push(dalUser);
+        });
+    }
+
+    public async findUserByEmail(email: string): Promise<User> {
+        return this.handleErrors(async (): Promise<User> => {
+            const dalUser = this.users.filter(user => user.email === email)[0];
+            return this.mapper.toDomain(dalUser);
         });
     }
 
