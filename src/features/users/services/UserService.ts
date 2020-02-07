@@ -10,6 +10,7 @@ import { CommonErrors } from '../../../common/errors/errors';
 import { userFactory } from '../models/domain/userDomain';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
 import { CreateUserErrors } from '../errors/errors';
+import { IDataValidator } from '../../../common/operations/validation/validation';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -19,17 +20,23 @@ export interface IUserService {
 
 export default class UserService implements IUserService {
     public constructor (
+        // Data Access
         private readonly userRepository: IUserRepository,
         private readonly taskRepository: ITaskRepository,
+        private readonly unitOfWorkFactory: IUnitOfWorkFactory,
+
+        // Business 
         private readonly authService: IAuthenticationService,
-        private readonly unitOfWorkFactory: IUnitOfWorkFactory
+
+        // Misc
+        private readonly dataValidator: IDataValidator
     ) {}
 
     public async signUpUser(userDTO: CreateUserDTO): Promise<void> {
-        const validationResult = validate(UserValidators.createUser, userDTO);
+        const validationResult = this.dataValidator.validate(UserValidators.createUser, userDTO);
 
-        if (validationResult.isLeft())
-            return Promise.reject(CommonErrors.ValidationError.create('User', validationResult.value));
+        if (validationResult.isLeft()) 
+            return Promise.reject(CommonErrors.ValidationError.create('User', validationResult.value)); 
 
         const [usernameTaken, emailTaken] = await Promise.all([
             this.userRepository.existsByUsername(userDTO.username),
@@ -37,10 +44,10 @@ export default class UserService implements IUserService {
         ]) as [boolean, boolean];
 
         if (usernameTaken)
-            Promise.reject(CreateUserErrors.UsernameTakenError.create());
+            return Promise.reject(CreateUserErrors.UsernameTakenError.create());
         
         if (emailTaken)
-            Promise.reject(CreateUserErrors.EmailTakenError.create());
+            return Promise.reject(CreateUserErrors.EmailTakenError.create());
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
