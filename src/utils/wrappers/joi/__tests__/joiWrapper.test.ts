@@ -1,8 +1,8 @@
 import { mock, when, instance, deepEqual } from 'ts-mockito';
-import { Either, Left, Right } from './../../logic/Either';
+import { Either, Left, Right } from '../../../logic/Either';
 
 // SUT
-import { validate } from './joiWrapper';
+import { validate } from '../joiWrapper';
 import { ObjectSchema, ValidationResult } from '@hapi/joi';
 
 describe('validation', () => {

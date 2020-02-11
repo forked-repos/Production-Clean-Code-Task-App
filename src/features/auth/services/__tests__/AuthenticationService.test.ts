@@ -1,14 +1,14 @@
 import { mock, when, instance, reset, anything } from 'ts-mockito';
 
 // SUT
-import AuthenticationService, { IAuthenticationService, ITokenPayload } from './AuthenticationService';
+import AuthenticationService, { IAuthenticationService, ITokenPayload } from '../AuthenticationService';
 
-import { IHashHandler } from './../../../common/operations/hashing/adapters/BcryptAdapter';
-import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from './../../../common/operations/tokens/adapters/JwtAdapter';
-import { ApplicationErrors } from '../../../common/errors/errors';
+import { IHashHandler } from '../../../../common/operations/hashing/adapters/BcryptAdapter';
+import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../../common/operations/tokens/adapters/JwtAdapter';
+import { ApplicationErrors } from '../../../../common/errors/errors';
 import { TokenExpiredError } from 'jsonwebtoken';
-import { TokenErrors } from '../../../common/operations/tokens/errors/errors';
-import { AuthorizationErrors } from '../errors/errors';
+import { TokenErrors } from '../../../../common/operations/tokens/errors/errors';
+import { AuthorizationErrors } from '../../errors/errors';
 
 let hashHandlerMock = mock<IHashHandler>();
 let tokenHandlerMock = mock<ITokenHandler>();

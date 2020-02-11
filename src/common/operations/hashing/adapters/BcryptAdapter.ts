@@ -30,7 +30,7 @@ export default class BcryptAdapter implements IHashHandler {
         try {
             return await this.bcrypt.genSalt(rounds);
         } catch (e) {
-            throw HashingErrors.CouldNotGenerateSaltError.create(e.message);
+            return Promise.reject(HashingErrors.CouldNotGenerateSaltError.create(e.message));
         }
     }
 
@@ -38,7 +38,7 @@ export default class BcryptAdapter implements IHashHandler {
         try {
             return await this.bcrypt.hash(toHash, salt);
         } catch (e) {
-            throw HashingErrors.CouldNotHashDataError.create(e.message)
+            return Promise.reject(HashingErrors.CouldNotHashDataError.create(e.message));
         }
     }
 
@@ -46,7 +46,7 @@ export default class BcryptAdapter implements IHashHandler {
         try {
             return await this.bcrypt.compare(candidate, knownHash);
         } catch (e) {
-            throw HashingErrors.CouldNotCompareHashesError.create(e.message);
+            return Promise.reject(HashingErrors.CouldNotCompareHashesError.create(e.message));
         }
     }
 }

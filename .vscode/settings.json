@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "postgresql"
-    ]
+    ],
+    "eslint.enable": false
 }

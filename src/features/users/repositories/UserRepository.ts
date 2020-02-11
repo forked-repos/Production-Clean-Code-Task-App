@@ -29,7 +29,7 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
     public async addUser(user: User): Promise<void> {
         return this.handleErrors(async (): Promise<void> => {
             const dalUser = this.mapper.toPersistence(user);
-            await this.users.push(dalUser);
+            this.users.push(dalUser);
         });
     }
 
@@ -66,29 +66,25 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async exists(t: User): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            const user = this.users.filter(user => this.mapper.toDomain(user) == t)[0];
-            return !!user;
-        })
+            return !!this.users.filter(user => this.mapper.toDomain(user) == t)[0];
+        });
     }
 
     public async existsById(id: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            const user = this.users.filter(user => user.user_id === id)[0];
-            return !!user;
+            return !!this.users.filter(user => user.user_id === id)[0];
         });
     }
 
     public async existsByUsername(username: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            const user = this.users.filter(user => user.username === username)[0];
-            return !!user;
+            return !!this.users.filter(user => user.username === username)[0];
         });
     }
 
     public async existsByEmail(email: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            const user = this.users.filter(user => user.email === email)[0];
-            return !!user;
+            return !!this.users.filter(user => user.email === email)[0];
         });
     }
 

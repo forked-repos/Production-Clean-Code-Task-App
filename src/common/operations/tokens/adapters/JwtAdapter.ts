@@ -31,7 +31,7 @@ export default class JwtAdapter implements ITokenHandler {
         try {
             return this.jwt.sign(payload, secret, opts as SignOptions);
         } catch (e) {
-            throw TokenErrors.CouldNotGenerateTokenError.create(e.message)
+            throw TokenErrors.CouldNotGenerateTokenError.create(e.message);
         }
     }
 
