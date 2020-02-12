@@ -15,8 +15,8 @@ export class FakeAuthenticationService implements IAuthenticationService, IFakeA
     private readonly hashes = new Map<string, string>();
     private readonly tokens = new Map<ITokenPayload, string>();
 
-    private readonly hash = '$123-ABC';
-    private readonly token = 'header.payload.alg';
+    public readonly hash = '$123-ABC';
+    public readonly token = 'header.payload.alg';
 
     hashPassword(plainTextPassword: string, rounds?: number): Promise<string> {
         this.hashes.set(plainTextPassword, this.hash);
