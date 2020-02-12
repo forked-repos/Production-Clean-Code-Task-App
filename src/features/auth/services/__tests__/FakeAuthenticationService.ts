@@ -24,7 +24,7 @@ export class FakeAuthenticationService implements IAuthenticationService, IFakeA
     }    
     
     checkHashMatch(candidate: string, hash: string): Promise<boolean> {
-        return Promise.resolve(this.hashes.has(candidate));
+        return Promise.resolve(candidate === hash);
     }
 
     generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string {
@@ -51,8 +51,13 @@ export class FakeAuthenticationService implements IAuthenticationService, IFakeA
     }
 
     didGenerateTokenForPayload(payload: ITokenPayload): boolean {
-        return this.tokens.has(payload);
+        let doesTokenExist: boolean = false;
+
+        for (let existingPayload of this.tokens.keys()) {
+            if (JSON.stringify(existingPayload) === JSON.stringify(payload))
+                doesTokenExist = true;
+        }
+
+        return doesTokenExist;
     }
 }
-
-const fas = new FakeAuthenticationService();

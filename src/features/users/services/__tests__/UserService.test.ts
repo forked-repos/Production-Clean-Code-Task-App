@@ -20,6 +20,8 @@ import { User } from './../../models/domain/userDomain';
 // SUT:
 import UserService from '../UserService';
 import { CommonErrors } from '../../../../common/errors/errors';
+import UserCredentialsDTO from './../../dtos/ingress/userCredentialsDTO';
+import { AuthorizationErrors } from '../../../auth/errors/errors';
 
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
@@ -123,3 +125,54 @@ describe('signUpUser', () => {
             .toEqual(CommonErrors.ValidationError.create('Users', '"email" must be a valid email'));
     });
 });
+
+describe('loginUser', () => {
+    test('should return a correct login response DTO for a user with correct credentials', async () => {
+        // Arrange
+        const knownEmail = 'jdoe@gmail.com';
+        const knownPassword = '123!aA.#14w';
+        const existingUser = userBuilder({ email: knownEmail, password: knownPassword });
+        const dto: UserCredentialsDTO = { email: knownEmail, password: knownPassword };
+
+        await userRepository.addUser(existingUser);
+
+        // Act
+        const tokenDTO = await userService.loginUser(dto);
+
+        // Assert
+        expect(tokenDTO).toEqual({ token: authService.token });
+        expect(authService.didGenerateTokenForPayload({ id: existingUser.id })).toBe(true);
+    });
+
+    test('should reject with an AuthorizationError if a user does not exist by the provided email', async () => {
+        // Arrange
+        const existingEmail = 'jdoe@gmail.com';
+        const candidateEmail = 'jdoe@outlook.com';
+        const existingUser = userBuilder({ email: existingEmail });
+        const dto: UserCredentialsDTO = { email: candidateEmail, password: '132abc!@#Q' };
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.loginUser(dto))
+            .rejects
+            .toEqual(AuthorizationErrors.AuthorizationError.create('Users'));
+    });
+
+    test('should reject with AuthorizationError if a user exists but passwords do not match', async () => {
+        // Arrange
+        const existingEmail = 'jdoe@gmail.com';
+        const existingPassword = '132abc!@A5';
+        const candidatePassword = 'abc67qA45^&';
+        const existingUser = userBuilder({ email: existingEmail, password: existingPassword });
+        const dto: UserCredentialsDTO = { email: existingEmail, password: candidatePassword };
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.loginUser(dto))
+            .rejects
+            .toEqual(AuthorizationErrors.AuthorizationError.create('Users'));
+    });
+});
+

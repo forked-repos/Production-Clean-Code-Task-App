@@ -1,7 +1,10 @@
+// Repositories & UoW
 import { IUserRepository } from './../UserRepository';
+import { IUnitOfWork } from './../../../../common/unit-of-work/unit-of-work';
+
+// Domain & Errors
 import { User } from './../../models/domain/userDomain';
 import { CommonErrors } from '../../../../common/errors/errors';
-import { IUnitOfWork } from './../../../../common/unit-of-work/unit-of-work';
 
 export class FakeUserRepository implements IUserRepository {
     public users: User[] = [];
