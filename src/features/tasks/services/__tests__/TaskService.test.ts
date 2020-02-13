@@ -6,6 +6,7 @@ import { FakeDataValidator } from './../../../../utils/wrappers/joi/__tests__/Fa
 import TaskService from './../TaskService';
 import { mock, instance } from 'ts-mockito';
 import { CommonErrors } from "../../../../common/errors/errors";
+import UpdateTaskDTO from './../../dtos/ingress/updateTaskDTO';
 
 let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;
@@ -67,5 +68,42 @@ describe('createNewTask', () => {
         await expect(taskService.createNewTask(dto))
             .rejects
             .toEqual(CommonErrors.ValidationError.create('Tasks', '"name" is not allowed to be empty'));
+    });
+});
+
+describe('editTask', () => {
+    test('should correctly persist an edited task', async () => {
+        // Arrange
+        const id = 'id';
+        const existingTask = taskBuilder({ id });
+        const dto: UpdateTaskDTO = { name: 'This is a name.' };
+
+        await taskRepository.addTask(existingTask);
+
+        // Act
+        await taskService.editTask(id, dto);
+
+        // Assert
+        const updatedTask = await taskRepository.findTaskById(id);
+        expect(updatedTask).toEqual({
+            ...existingTask,
+            ...dto
+        });
+    });
+
+    test('should reject with a ValidationError if a new task fails validation', async () => {
+        // Arrange
+        const existingTask = taskBuilder();
+        const dto: UpdateTaskDTO = { name: '' };
+
+        await taskRepository.addTask(existingTask);
+
+        // Act, Assert
+        await expect(taskService.editTask(existingTask.id, dto))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Tasks', '"name" is not allowed to be empty'));
+
+        const task = await taskRepository.findTaskById(existingTask.id);
+        expect(task).toEqual(existingTask);
     });
 });

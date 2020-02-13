@@ -2,6 +2,7 @@ import { ITaskRepository } from './../TaskRepository';
 import { Task } from './../../models/domain/taskDomain';
 import { IUnitOfWork } from './../../../../common/unit-of-work/unit-of-work';
 import { FakeBaseRepository } from './../../../../common/repositories/__tests__/FakeBaseRepository';
+import { CommonErrors } from '../../../../common/errors/errors';
 
 export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepository {
     public readonly tasks: Task[] = [];
@@ -11,6 +12,31 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
             async () => { this.tasks.push(task); },
             task.description
         );
+    }
+
+    public async findTaskById(id: string): Promise<Task> {
+        return this.handleErrors(async () => {
+            const task = this.tasks.filter(task => task.id === id)[0];
+
+            if (!task)
+                return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
+            return task;
+        }, id);
+    }
+
+    public async updateTask(updatedTask: Task): Promise<void> {
+        return this.handleErrors(async () => {
+            const doesTaskExist = await this.existsById(updatedTask.id);
+
+            if (!doesTaskExist)
+                return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
+            const taskToUpdate = await this.findTaskById(updatedTask.id);
+            const taskToUpdateIndex = this.tasks.indexOf(taskToUpdate);
+    
+            this.tasks[taskToUpdateIndex] = updatedTask;
+        }, updatedTask.name);
     }
 
     public async findTaskByName(name: string): Promise<Task> {
@@ -28,8 +54,11 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
         throw new Error("Method not implemented.");
     }
     
-    existsById(id: string): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    async existsById(id: string): Promise<boolean> {
+        return this.handleErrors(
+            async () => !!this.tasks.filter(task => task.id === id)[0],
+            id
+        );
     }
     
     forUnitOfWork(unitOfWork: IUnitOfWork): this {
