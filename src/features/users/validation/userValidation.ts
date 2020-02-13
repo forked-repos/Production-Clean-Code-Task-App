@@ -1,5 +1,7 @@
 import Joi from '@hapi/joi';
 
+import { joiGenericMapper } from './../../../utils/helpers/joi/helpers';
+
 const userCommonFields: { [key: string]: Joi.AnySchema } = {
     firstName: Joi.string()
         .min(2)
@@ -26,18 +28,6 @@ const userCommonFields: { [key: string]: Joi.AnySchema } = {
         .required(),
 };
 
-const joiGenericMapper = (
-    toModify: Joi.SchemaMap, 
-    modifier: (currSchema: Joi.AnySchema) => Joi.AnySchema
-): Joi.SchemaMap => {
-    const modifiedObject: Joi.SchemaMap = {};
-
-    Object.keys(toModify).map((key) => {
-        modifiedObject[key] = modifier(userCommonFields[key]);
-    });
-
-    return modifiedObject;
-};
 
 export namespace UserValidators {
     export const createUser = Joi.object().keys({

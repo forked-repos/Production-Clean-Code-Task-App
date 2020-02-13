@@ -6,17 +6,20 @@ import { ITokenEncodingOptions, ITokenDecodingOptions } from './../../../../comm
 import { Either, left, right } from "../../../../utils/logic/Either";
 import { AuthorizationErrors } from "../../errors/errors";
 
+import AuthenticationService from './../AuthenticationService';
+import JwtAdapter from './../../../../common/operations/tokens/adapters/JwtAdapter';
+import jsonwebtoken from 'jsonwebtoken';
+import { IHashHandler } from './../../../../common/operations/hashing/adapters/BcryptAdapter';
+
 interface IFakeAuthenticationService {
     didHash(password: string): boolean;
-    didGenerateTokenForPayload(payload: ITokenPayload): boolean;
 }
 
 export class FakeAuthenticationService implements IAuthenticationService, IFakeAuthenticationService {
     private readonly hashes = new Map<string, string>();
-    private readonly tokens = new Map<ITokenPayload, string>();
+    private readonly realAuthService = new AuthenticationService({} as IHashHandler, new JwtAdapter(jsonwebtoken))
 
     public readonly hash = '$123-ABC';
-    public readonly token = 'header.payload.alg';
 
     hashPassword(plainTextPassword: string, rounds?: number): Promise<string> {
         this.hashes.set(plainTextPassword, this.hash);
@@ -28,36 +31,17 @@ export class FakeAuthenticationService implements IAuthenticationService, IFakeA
     }
 
     generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string {
-        this.tokens.set(payload, this.token);
-        return this.token;
+       return this.realAuthService.generateAuthToken(payload, opts);
     }
 
     verifyAndDecodeAuthToken(
         candidateToken: string, 
         opts?: ITokenDecodingOptions
     ): Either<AuthorizationErrors.AuthorizationError, ITokenPayload> {
-        for (let payload of this.tokens.keys()) {
-            const token = this.tokens.get(payload);
-
-            if (token === candidateToken) 
-                return right(payload);
-        }
-
-        return left(AuthorizationErrors.AuthorizationError.create());
+        return this.realAuthService.verifyAndDecodeAuthToken(candidateToken, opts);
     }  
     
     didHash(password: string): boolean {
         return this.hashes.has(password);
-    }
-
-    didGenerateTokenForPayload(payload: ITokenPayload): boolean {
-        let doesTokenExist: boolean = false;
-
-        for (let existingPayload of this.tokens.keys()) {
-            if (JSON.stringify(existingPayload) === JSON.stringify(payload))
-                doesTokenExist = true;
-        }
-
-        return doesTokenExist;
     }
 }

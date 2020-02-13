@@ -5,28 +5,32 @@ import { FakeUserRepository } from './../../repositories/__tests__/FakeUserRepos
 import { FakeTaskRepository } from './../../../tasks/repositories/__tests__/FakeTaskRepository';
 import { IUnitOfWorkFactory } from '../../../../common/unit-of-work/unit-of-work';
 import { FakeAuthenticationService } from './../../../auth/services/__tests__/FakeAuthenticationService';
-import { validate } from './../../../../utils/wrappers/joi/joiWrapper';
-import { IDataValidator } from './../../../../common/operations/validation/validation';
 
 // DTOs
 import CreateUserDTO from '../../dtos/ingress/createUserDTO';
+import UserCredentialsDTO from './../../dtos/ingress/userCredentialsDTO';
 
 // Errors
 import { CreateUserErrors } from '../../errors/errors';
+import { CommonErrors, ApplicationErrors } from '../../../../common/errors/errors';
+import { AuthorizationErrors } from '../../../auth/errors/errors';
 
 // Misc
 import { User } from './../../models/domain/userDomain';
+import { FakeDataValidator } from './../../../../utils/wrappers/joi/__tests__/FakeDataValidator';
+import jsonwebtoken  from 'jsonwebtoken';
+import _ from 'lodash';
 
 // SUT:
 import UserService from '../UserService';
-import { CommonErrors } from '../../../../common/errors/errors';
-import UserCredentialsDTO from './../../dtos/ingress/userCredentialsDTO';
-import { AuthorizationErrors } from '../../../auth/errors/errors';
+import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
+
 
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;
 let authService: FakeAuthenticationService;
+let dataValidator: FakeDataValidator;
 
 // SUT:
 let userService: UserService;
@@ -36,14 +40,17 @@ beforeEach(() => {
     taskRepository = new FakeTaskRepository();
     unitOfWorkFactory = mock<IUnitOfWorkFactory>();
     authService = new FakeAuthenticationService();
+    dataValidator = new FakeDataValidator();
 
     userService = new UserService(
         userRepository,
         taskRepository,
         instance(unitOfWorkFactory),
         authService,
-        { validate: validate } as IDataValidator
+        dataValidator
     );
+
+    dataValidator.allowBadData(false);
 });
 
 const userBuilder = (opts?: Partial<User>): User => ({
@@ -68,7 +75,7 @@ const createUserDTOBuilder = (opts?: Partial<CreateUserDTO>): CreateUserDTO => (
 });
 
 describe('signUpUser', () => {
-    test('should correctly sign up a user', async () => {
+    test('should correctly persist a user', async () => {
         // Arrange
         const dto = createUserDTOBuilder();
 
@@ -81,7 +88,7 @@ describe('signUpUser', () => {
         expect(authService.didHash(dto.password)).toBe(true);
         expect(user).toEqual({
             ...dto,
-            id: 'create-an-id',
+            id: 'create-an-id', // Implement Hi-Lo Algorithm for this.
             password: authService.hash
         });
     });
@@ -140,18 +147,15 @@ describe('loginUser', () => {
         const tokenDTO = await userService.loginUser(dto);
 
         // Assert
-        expect(tokenDTO).toEqual({ token: authService.token });
-        expect(authService.didGenerateTokenForPayload({ id: existingUser.id })).toBe(true);
+        const payload = { id: existingUser.id };
+        const expectedToken = jsonwebtoken.sign(payload, 'my-secret', { expiresIn: '15 minutes' });
+        expect(tokenDTO).toEqual({ token: expectedToken });
     });
 
     test('should reject with an AuthorizationError if a user does not exist by the provided email', async () => {
         // Arrange
-        const existingEmail = 'jdoe@gmail.com';
         const candidateEmail = 'jdoe@outlook.com';
-        const existingUser = userBuilder({ email: existingEmail });
         const dto: UserCredentialsDTO = { email: candidateEmail, password: '132abc!@#Q' };
-
-        await userRepository.addUser(existingUser);
 
         // Act, Assert
         await expect(userService.loginUser(dto))
@@ -174,5 +178,143 @@ describe('loginUser', () => {
             .rejects
             .toEqual(AuthorizationErrors.AuthorizationError.create('Users'));
     });
+
+    test('should reject with an UnexpectedError in the event of a non-NotFound, non-AuthorizationError', async () => {
+        // Arrange
+        const triggerEmail = 'network-error';
+        const dto: UserCredentialsDTO = { email: triggerEmail, password: '123abcAB!@#' };
+        dataValidator.allowBadData(true);
+
+        // Act, Assert
+        await expect(userService.loginUser(dto))
+            .rejects
+            .toEqual(ApplicationErrors.UnexpectedError.create());
+    });
 });
 
+describe('findUserById', () => {
+    test('should return a Response DTO of the correct form if a valid, existing ID is provided', async () => {
+        // Arrange
+        const id = '1';
+        const existingUser = userBuilder({ id });
+
+        userRepository.addUser(existingUser);
+
+        // Act
+        const dto = await userService.findUserById(id);
+
+        // Assert
+        expect(dto).toEqual({ user: _.omit(existingUser, ['password']) });
+    });
+});
+
+describe('updateUserById', () => {
+    test('should reject with a ValidationError if new fields do not pass validation', async () => {
+        // Arrange
+        const updatesDto: UpdateUserDTO = { email: 'my-email', biography: 'a new bio' };
+
+        // Act, Assert
+        await expect(userService.updateUserById('id', updatesDto))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Users', '"email" must be a valid email'));
+
+    });
+
+    test('should reject with an EmailTakenError if a provided email is already in use', async () => {
+        // Arrange
+        const duplicateEmail = 'duplicate@gmail.com';
+        const existingUser = userBuilder({ email: duplicateEmail });
+        const updatesDto = { email: duplicateEmail }
+        
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.updateUserById('id', updatesDto))
+            .rejects
+            .toEqual(CreateUserErrors.EmailTakenError.create());
+    });
+
+    test('should reject with UsernameTakenError if a provided username is already in use', async () => {
+        // Arrange
+        const duplicateUsername = 'duplicateUsername';
+        const existingUser = userBuilder({ username: duplicateUsername });
+        const updatesDto = { username: duplicateUsername };
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.updateUserById('id', updatesDto))
+            .rejects
+            .toEqual(CreateUserErrors.UsernameTakenError.create())
+    });
+
+    test('should reject with NotFoundError if a provided id is not found', async () => {
+        // Arrange
+        const existingID = 'id';
+        const unknownID = 'unknown_id';
+        const existingUser = userBuilder({ id: existingID });
+
+        await userRepository.addUser(existingUser)
+        
+        // Act, Assert
+        await expect(userService.updateUserById(unknownID, {}))
+            .rejects
+            .toEqual(CommonErrors.NotFoundError.create('Users'));
+    });
+
+    test('should correctly update a user', async () => {
+        // Arrange
+        const id = 'id';
+        const existingUser = userBuilder({ id });
+        const updatesDto: UpdateUserDTO = { email: 'new@gmail.com', biography: 'A new bio.' };
+
+        await userRepository.addUser(existingUser);
+
+        // Act
+        await userService.updateUserById(id, updatesDto);
+
+        // Assert
+        const updatedUser = await userRepository.findUserById(id);
+        expect(updatedUser).toEqual({
+            ...existingUser,
+            ...updatesDto
+        });
+    });
+
+    test('should not mutate existing id',async  () => {
+        // Arrange
+        const originalId = 'original';
+        const newId = 'updated';
+        const existingUser = userBuilder({ id: originalId });
+        const updatesDto = { id: newId };
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.updateUserById(originalId, updatesDto as UpdateUserDTO))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Users', '"id" is not allowed'));
+
+        const persistedUser = await userRepository.findUserByEmail(existingUser.email);
+        expect(persistedUser).toEqual(existingUser);
+    });
+
+    test('should not mutate existing password', async () => {
+        // Arrange
+        const id = 'id';
+        const originalPassword = 'somePass123.%^';
+        const newPassword = 'aNewPass7^^&*0';
+        const existingUser = userBuilder({ id, password: originalPassword });
+        const updatesDto = { password: newPassword };
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(userService.updateUserById(id, updatesDto as UpdateUserDTO))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Users', '"password" is not allowed'));
+
+        const persistedUser = await userRepository.findUserByEmail(existingUser.email);
+        expect(persistedUser).toEqual(existingUser);
+    });
+});
