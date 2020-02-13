@@ -19,7 +19,7 @@ import { AuthorizationErrors } from '../../../auth/errors/errors';
 import { User } from './../../models/domain/userDomain';
 import { FakeDataValidator } from './../../../../utils/wrappers/joi/__tests__/FakeDataValidator';
 import jsonwebtoken  from 'jsonwebtoken';
-import _ from 'lodash';
+import _, { Many } from 'lodash';
 
 // SUT:
 import UserService from '../UserService';
@@ -204,7 +204,7 @@ describe('findUserById', () => {
         const dto = await userService.findUserById(id);
 
         // Assert
-        expect(dto).toEqual({ user: _.omit(existingUser, ['password']) });
+        expect(dto).toEqual({ user: _.omit(existingUser, ['password'] as Many<any>) });
     });
 });
 

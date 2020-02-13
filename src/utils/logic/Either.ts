@@ -11,7 +11,7 @@ export class Left<L, A> {
         return false;
     }
 
-    applyOnRight<B>(_: (a: A) => B): Either<L, B> {
+    map<B>(_: (a: A) => B): Either<L, B> {
         return this as any;
     }
 }
@@ -27,8 +27,12 @@ export class Right<L, A> {
         return true;
     }
 
-    applyOnRight<B>(func: (a: A) => B): Either<L, B> {
+    map<B>(func: (a: A) => B): Either<L, B> {
         return new Right<L, B>(func(this.value));
+    }
+
+    flatMap<B>(func: (wrapped: A) => Either<L, B>): Either<L, B> {
+        return func(this.value);
     }
 }
 

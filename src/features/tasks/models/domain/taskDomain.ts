@@ -13,9 +13,9 @@ export enum TaskCompletionStatus {
 export interface Task {
     id: string;
     name: string;
-    description: string;
+    description?: string;
     owner: string;
-    dueDate: string;
+    dueDate?: string;
     priority: number;
     completionStatus: string;
 }
