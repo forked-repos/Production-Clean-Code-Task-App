@@ -43,4 +43,8 @@ export default class TaskService {
 
         await this.taskRepository.updateTask(updatedTask);
     }
+
+    public async deleteTaskById(id: string): Promise<void> {
+        await this.taskRepository.removeTaskById(id);
+    }
 }

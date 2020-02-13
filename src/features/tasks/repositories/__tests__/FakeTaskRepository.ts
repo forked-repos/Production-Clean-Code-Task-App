@@ -5,7 +5,7 @@ import { FakeBaseRepository } from './../../../../common/repositories/__tests__/
 import { CommonErrors } from '../../../../common/errors/errors';
 
 export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepository {
-    public readonly tasks: Task[] = [];
+    public tasks: Task[] = [];
     
     public async addTask(task: Task): Promise<void> {
         return this.handleErrors(
@@ -37,6 +37,10 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
     
             this.tasks[taskToUpdateIndex] = updatedTask;
         }, updatedTask.name);
+    }
+
+    public async removeTaskById(id: string): Promise<void> {
+        return this.handleErrors(async () => { this.tasks = this.tasks.filter(task => task.id !== id); });
     }
 
     public async findTaskByName(name: string): Promise<Task> {

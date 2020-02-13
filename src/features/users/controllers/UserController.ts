@@ -13,17 +13,19 @@ import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
 export default class UserController {
     public constructor(
         private readonly userService: IUserService,
-        private readonly httpHandler: IExpressHttpResponseHandler
-    ) {}
+        private httpHandler: IExpressHttpResponseHandler
+    ) {
+        console.log('loaded')
+    }
 
     @POST()
-    async createUser(request: Request): Promise<Response> {
-        console.log('hi')
+    async createUser(request: Request, res: Response): Promise<Response> {
         await this.userService.signUpUser(request.body as CreateUserDTO);
         return this.httpHandler.createdOk();
     }
 
     @POST()
+    @route('/login')
     async loginUser(request: Request): Promise<Response> {
         const dto = await this.userService.loginUser(request.body as UserCredentialsDTO);
         return this.httpHandler.withDTO<LoggedInUserResponseDTO>(dto);

@@ -20,10 +20,14 @@ export interface IUserRepository extends IRepository<User>, IUnitOfWorkCapable {
 export default class UserRepository extends BaseKnexRepository implements IUserRepository {
     private users: UserDalEntity[] = [];
 
+    private readonly mapper: IDomainPersistenceMapper<User, UserDalEntity>;
+
     public constructor (
-        private readonly mapper: IDomainPersistenceMapper<User, UserDalEntity>
+        userDomainPersistenceMapper: IDomainPersistenceMapper<User, UserDalEntity>
     ) {
         super();
+
+        this.mapper = userDomainPersistenceMapper;
     }
 
     public async addUser(user: User): Promise<void> {
@@ -78,13 +82,13 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async existsByUsername(username: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => user.username === username)[0];
+            return !this.users.filter(user => user.username === username)[0];
         });
     }
 
     public async existsByEmail(email: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => user.email === email)[0];
+            return !this.users.filter(user => user.email === email)[0];
         });
     }
 

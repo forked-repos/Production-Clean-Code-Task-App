@@ -1,19 +1,35 @@
 import { AwilixContainer, createContainer, InjectionMode, asClass, Lifetime, asFunction, asValue } from "awilix";
 
+// Operations - Hashing
+import bcryptjs from 'bcryptjs';
+import BcryptAdapter from "../common/operations/hashing/adapters/BcryptAdapter";
+
+// Operations - Tokens
+import jsonwebtoken from "jsonwebtoken";
+import JwtAdapter from "../common/operations/tokens/adapters/JwtAdapter";
+
+// Features - Authentication
 import AuthenticationService from './../features/auth/services/AuthenticationService';
+
+// Features - Users
 import UserService from "../features/users/services/UserService";
 import UserRepository from "../features/users/repositories/UserRepository";
+
+// Features - Tasks
+import TaskService from "../features/tasks/services/TaskService";
 import TaskRepository from "../features/tasks/repositories/TaskRepository";
 
-import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
-import BcryptAdapter from "../common/operations/hashing/adapters/BcryptAdapter";
-import JwtAdapter from "../common/operations/tokens/adapters/JwtAdapter";
+// Data Access
 import { KnexUnitOfWorkFactory } from './../common/unit-of-work/knex/KnexUnitOfWork';
+
+// HTTP
 import ExpressHttpResponseHandler from './../common/http/express/ExpressHttpResponseHandler';
 
-import bcryptjs from 'bcryptjs';
-import jsonwebtoken from "jsonwebtoken";
+// Misc
+import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
+
 import { validate } from './../utils/wrappers/joi/joiWrapper';
+
 
 export const configureContainer = (): AwilixContainer => {
     const container = createContainer({ injectionMode: InjectionMode.CLASSIC });
@@ -24,6 +40,7 @@ export const configureContainer = (): AwilixContainer => {
     container.register({
         authService: asClass(AuthenticationService, lifetimeScoped),
         userService: asClass(UserService, lifetimeScoped),
+        taskService: asClass(TaskService, lifetimeScoped)
     });
 
     // Register Repositories
@@ -34,7 +51,7 @@ export const configureContainer = (): AwilixContainer => {
 
     // Register Mappers
     container.register({
-        mapper: asFunction(UserDomainPersistenceMapper)
+        userDomainPersistenceMapper: asFunction(UserDomainPersistenceMapper),
     });
 
     // Register Adapters
@@ -45,20 +62,21 @@ export const configureContainer = (): AwilixContainer => {
 
     // Register Unit of Work
     container.register({
-        KnexUnitOfWorkFactory: asClass(KnexUnitOfWorkFactory, lifetimeScoped),
+        unitOfWorkFactory: asClass(KnexUnitOfWorkFactory, lifetimeScoped),
     });
 
     // Register Misc Helpers
     container.register({
-        expressHttpResponseHandler: asClass(ExpressHttpResponseHandler, lifetimeScoped)
+        httpHandler: asClass(ExpressHttpResponseHandler, lifetimeScoped)
     });
 
     // Third-Party Deps
     container.register({
         bcrypt: asValue(bcryptjs),
         jwt: asValue(jsonwebtoken),
-        dataValidator: asFunction(validate)
-    })
+        dataValidator: asValue({validate}),
+        knexInstance: asValue({}),
+    });
 
     return container;
 };

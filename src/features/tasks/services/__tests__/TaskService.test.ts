@@ -107,3 +107,21 @@ describe('editTask', () => {
         expect(task).toEqual(existingTask);
     });
 });
+
+describe('deleteTask', () => {
+    test('should correctly remove a task from persistence', async () => {
+        // Arrange
+        const id = 'id';
+        const existingTask = taskBuilder({ id });
+
+        await taskRepository.addTask(existingTask);
+        const currentNumberOfTasks = taskRepository.tasks.length;
+
+        // Act
+        await taskService.deleteTaskById(id);
+
+        // Assert
+        expect(taskRepository.tasks.length).toBe(currentNumberOfTasks - 1);
+        expect(taskRepository.tasks.indexOf(existingTask)).toBe(-1);
+    });
+});

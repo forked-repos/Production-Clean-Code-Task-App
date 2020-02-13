@@ -9,11 +9,12 @@ export interface ITaskRepository extends IRepository<Task>, IUnitOfWorkCapable {
     addTask(task: Task): Promise<void>;
     updateTask(task: Task): Promise<void>;
     findTaskById(id: string): Promise<Task>;
+    removeTaskById(id: string): Promise<void>;
     removeTasksByOwnerId(id: string): Promise<void>;
 }
 
 export default class TaskRepository extends BaseKnexRepository implements ITaskRepository {
-    public readonly tasks: Task[] = [];
+    public tasks: Task[] = [];
 
     public async addTask(task: Task): Promise<void> {
         this.tasks.push(task);
@@ -37,6 +38,10 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
 
             console.log(this.tasks[taskIndex])
         });
+    }
+
+    public async removeTaskById(id: string): Promise<void> {
+        return this.handleErrors(async () => { this.tasks = this.tasks.filter(task => task.id !== id); });
     }
 
     public async removeTasksByOwnerId(ownerId: string): Promise<void> {
