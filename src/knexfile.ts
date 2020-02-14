@@ -18,7 +18,7 @@ module.exports = {
 			max: 10
 		},
 		migrations: {
-			tableName: "knex_migrations"
+			tableName: "db/staging/knex_migrations"
 		}
   	},
 
@@ -34,7 +34,7 @@ module.exports = {
 			max: 10
     	},
     	migrations: {
-      		tableName: "knex_migrations"
+      		tableName: "db/prod/knex_migrations"
     	}
   	}
 };
