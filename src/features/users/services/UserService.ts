@@ -27,6 +27,7 @@ import { CreateUserErrors } from '../errors/errors';
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import { mappers } from '../mappers/domain-egress-dto/mappers';
+import { EventEmitter } from 'events';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -36,7 +37,7 @@ export interface IUserService {
     deleteUserById(id: string): Promise<void>;
 }
 
-export default class UserService implements IUserService {
+export default class UserService extends EventEmitter implements IUserService {
     public constructor (
         // Data Access
         private readonly userRepository: IUserRepository,
@@ -48,7 +49,9 @@ export default class UserService implements IUserService {
 
         // Misc
         private readonly dataValidator: IDataValidator
-    ) {}
+    ) {
+        super();
+    }
 
     public async signUpUser(userDTO: CreateUserDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(UserValidators.createUser, userDTO);
@@ -72,6 +75,9 @@ export default class UserService implements IUserService {
         const user: User = { id: 'create-an-id', ...userDTO, password: hash };
 
         await this.userRepository.addUser(user);
+
+        // I know this won't invoke the handlers. I'm just getting some piping in place.
+        this.emit('userSignedUp', { id: user.id, firstName: user.firstName, email: user.email })
     }
 
     public async loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO> {
