@@ -1,6 +1,5 @@
 import * as Knex from "knex";
 
-
 export const up = async (knex: Knex): Promise<any> => {
     // TODO: Add array for S3 URLs here.
     knex.schema.createTable('users', table => {
