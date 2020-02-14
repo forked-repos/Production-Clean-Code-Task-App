@@ -40,6 +40,10 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
     public async findUserByEmail(email: string): Promise<User> {
         return this.handleErrors(async (): Promise<User> => {
             const dalUser = this.users.filter(user => user.email === email)[0];
+
+            if (!dalUser) 
+                return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
             return this.mapper.toDomain(dalUser);
         });
     }
@@ -82,13 +86,13 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async existsByUsername(username: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !this.users.filter(user => user.username === username)[0];
+            return !!this.users.filter(user => user.username === username)[0];
         });
     }
 
     public async existsByEmail(email: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !this.users.filter(user => user.email === email)[0];
+            return !!this.users.filter(user => user.email === email)[0];
         });
     }
 

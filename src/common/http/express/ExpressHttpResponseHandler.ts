@@ -82,7 +82,8 @@ export default class ExpressHttpResponseHandler implements IExpressHttpResponseH
         const fallbackError = ApplicationErrors.UnexpectedError.create(operationalDomain)
         if (error instanceof BaseErrors.DomainError) {
             const serializedError = error.serializeError();
-            const errorWithStatus = (statusCode: number) => this.json(serializedError, statusCode);
+            const errorWithStatus = (statusCode: number) => 
+                this.json({ statusCode, errors: [serializedError] }, statusCode);
 
             switch (error.errorCausationReason) {
                 case ErrorCausationReason.BAD_DATA_PROVIDED:

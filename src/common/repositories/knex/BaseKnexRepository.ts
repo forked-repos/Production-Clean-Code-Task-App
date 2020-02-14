@@ -1,5 +1,6 @@
 import { ApplicationErrors } from "../../errors/errors";
 import { IBaseRepository } from './../repository';
+import { BaseErrors } from './../../errors/errors';
 
 /**
  * Helper methods for Knex Repositories.
@@ -12,6 +13,9 @@ export class BaseKnexRepository implements IBaseRepository {
             // Throw wrapped exceptions here.
             // Maybe log?
             console.error('base error', err);
+
+            if (err instanceof BaseErrors.DomainError)
+                throw err;
             
             switch(err) {
                 default:

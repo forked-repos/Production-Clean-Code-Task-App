@@ -45,8 +45,8 @@ export const configureContainer = (): AwilixContainer => {
 
     // Register Repositories
     container.register({
-        userRepository: asClass(UserRepository, lifetimeScoped),
-        taskRepository: asClass(TaskRepository)
+        userRepository: asClass(UserRepository, lifetimeScoped).singleton(),
+        taskRepository: asClass(TaskRepository).singleton()
     });
 
     // Register Mappers
