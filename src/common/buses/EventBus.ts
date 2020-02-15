@@ -3,8 +3,8 @@
 export type Channel = string;
 export type Observer<Payload> = (payload: Payload) => void;
 
-type EventBusInternal = Record<Channel, any>;
-type EventBus = IEventBus<EventBusInternal>;
+export type EventBusInternal = Record<Channel, any>;
+export type EventBus = IEventBus<EventBusInternal>;
 
 export interface IEventBus<Events extends EventBusInternal> {
     /**
@@ -68,38 +68,3 @@ export function createEventBus<Events extends Record<Channel, any>>() {
     return EventBus();
 }
 
-/**
- * A manager to make working with multiple buses easier.
- */
-class EventBusManager<T extends { [key: string]: EventBus }> {
-    public constructor (private busMap: T) {}
-
-    public getBus<K extends keyof T>(busName: K): T[K] {
-        return this.busMap[busName];
-    }
-
-    public registerObserver<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? keyof A : never,
-        U extends T[K] extends IEventBus<infer A> ? A : never
-    >(busName: K, channel: Y, observer: Observer<U[Y]>): Observer<U[Y]> {
-        this.busMap[busName].subscribe(channel, observer);
-        return observer;
-    }
-
-    public unregisterObserver<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? keyof A : never,
-        U extends T[K] extends IEventBus<infer A> ? A : never
-    >(busName: K, channel: Y, observer: Observer<U[Y]>): void {
-        this.busMap[busName].unsubscribe(channel, observer);
-    }
-
-    public dispatchEvent<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? keyof A : never,
-        U extends T[K] extends IEventBus<infer A> ? A : never
-    >(busName: K, channel: Y, payload: U[Y]) {
-        this.busMap[busName].dispatch(channel, payload);
-    }
-}
