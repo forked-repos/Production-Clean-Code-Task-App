@@ -7,7 +7,8 @@ import ExpressHttpResponseHandler from './common/http/express/ExpressHttpRespons
 
 import { EventBuses } from './loaders/loadBuses';
 
-import './features/users/observers/onUserSignedUp'
+import './features/users/observers/onUserSignedUp';
+import './features/users/observers/onUserDeletedAccount';
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();

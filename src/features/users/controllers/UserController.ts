@@ -46,4 +46,11 @@ export default class UserController {
         const user = await this.userService.findUserById(request.params.id);
         return this.httpHandler.withDTO(user);
     }
+
+    @DELETE()
+    @route('/:id')
+    async deleteUserById(request: Request): Promise<Response> {
+        await this.userService.deleteUserById(request.params.id);
+        return this.httpHandler.ok();
+    }
 }

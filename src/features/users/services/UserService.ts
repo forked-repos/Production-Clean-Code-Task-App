@@ -157,12 +157,20 @@ export default class UserService implements IUserService {
         const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
         const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
 
+        const user = await this.userRepository.findUserById(id);
+
         try {
             await boundUserRepository.removeUserById(id);
             await boundTaskRepository.removeTasksByOwnerId(id);
             await unitOfWork.commit();
         } catch (e) {
             await unitOfWork.rollback();
-        }
+        } 
+
+        this.userEventBus.dispatch(UserEventingChannel.USER_DELETED_ACCOUNT, {
+            id: user.id,
+            firstName: user.firstName,
+            email: user.email
+        });
     }
 }
