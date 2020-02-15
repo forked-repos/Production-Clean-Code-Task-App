@@ -24,6 +24,8 @@ import _, { Many } from 'lodash';
 // SUT:
 import UserService from '../UserService';
 import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
+import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
+import { UserEvents } from '../../observers/events';
 
 
 let userRepository: FakeUserRepository;
@@ -31,6 +33,7 @@ let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;
 let authService: FakeAuthenticationService;
 let dataValidator: FakeDataValidator;
+let userEventBus: IEventBus<UserEvents>;
 
 // SUT:
 let userService: UserService;
@@ -41,13 +44,15 @@ beforeEach(() => {
     unitOfWorkFactory = mock<IUnitOfWorkFactory>();
     authService = new FakeAuthenticationService();
     dataValidator = new FakeDataValidator();
+    userEventBus = mock<IEventBus<UserEvents>>();
 
     userService = new UserService(
         userRepository,
         taskRepository,
         instance(unitOfWorkFactory),
         authService,
-        dataValidator
+        dataValidator,
+        instance(userEventBus)
     );
 
     dataValidator.allowBadData(false);

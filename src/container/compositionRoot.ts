@@ -25,6 +25,11 @@ import { KnexUnitOfWorkFactory } from './../common/unit-of-work/knex/KnexUnitOfW
 // HTTP
 import ExpressHttpResponseHandler from './../common/http/express/ExpressHttpResponseHandler';
 
+// Eventing
+import { createEventBus } from "../common/buses/EventBus";
+import { UserEvents } from "../features/users/observers/events";
+//import { userEventBusProvider } from './../features/users/observers/onUserSignedUp';
+
 // Misc
 import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
 
@@ -52,6 +57,16 @@ export const configureContainer = (): AwilixContainer => {
     // Register Mappers
     container.register({
         userDomainPersistenceMapper: asFunction(UserDomainPersistenceMapper),
+    });
+
+    // Register Event Buses
+    container.register({
+        userEventBus: asFunction(() => createEventBus<UserEvents>()).classic().singleton()
+    });
+
+    // Register Event Observers
+    container.register({
+        //userEventBusProvider: asFunction(userEventBusProvider)
     });
 
     // Register Adapters

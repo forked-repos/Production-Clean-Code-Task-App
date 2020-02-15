@@ -23,11 +23,14 @@ import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
 import { AuthorizationErrors } from '../../auth/errors/errors';
 import { CreateUserErrors } from '../errors/errors';
 
+// Eventing
+import { IEventBus } from './../../../common/buses/EventBus';
+import { UserEvents, UserEventingChannel } from '../observers/events';
+
 // Misc
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import { mappers } from '../mappers/domain-egress-dto/mappers';
-import { EventEmitter } from 'events';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -37,7 +40,7 @@ export interface IUserService {
     deleteUserById(id: string): Promise<void>;
 }
 
-export default class UserService extends EventEmitter implements IUserService {
+export default class UserService implements IUserService {
     public constructor (
         // Data Access
         private readonly userRepository: IUserRepository,
@@ -48,10 +51,9 @@ export default class UserService extends EventEmitter implements IUserService {
         private readonly authService: IAuthenticationService,
 
         // Misc
-        private readonly dataValidator: IDataValidator
-    ) {
-        super();
-    }
+        private readonly dataValidator: IDataValidator,
+        private readonly userEventBus: IEventBus<UserEvents>
+    ) {}
 
     public async signUpUser(userDTO: CreateUserDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(UserValidators.createUser, userDTO);
@@ -76,8 +78,11 @@ export default class UserService extends EventEmitter implements IUserService {
 
         await this.userRepository.addUser(user);
 
-        // I know this won't invoke the handlers. I'm just getting some piping in place.
-        this.emit('userSignedUp', { id: user.id, firstName: user.firstName, email: user.email })
+        this.userEventBus.dispatch(UserEventingChannel.USER_SIGNED_UP, {
+            id: user.id,
+            firstName: user.firstName,
+            email: user.email
+        });
     }
 
     public async loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO> {

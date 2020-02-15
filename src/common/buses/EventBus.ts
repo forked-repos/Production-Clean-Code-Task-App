@@ -1,4 +1,5 @@
 // I know, I know. I could have done this with classes. But, functions are fun.
+
 export type Channel = string;
 export type Observer<Payload> = (payload: Payload) => void;
 
@@ -34,6 +35,7 @@ export function createEventBus<Events extends Record<Channel, any>>() {
 
         return {
             subscribe: <K extends keyof Events>(channel: K, observer: Observer<Events[K]>): Observer<Events[K]> => {
+                console.log('subscribe')
                 if (!observerMap.has(channel)) {
                     observerMap.set(channel, [observer] as Observer<any>[])
                 } else {

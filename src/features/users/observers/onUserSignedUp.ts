@@ -1,27 +1,23 @@
-import events from 'events';
+import { IEventBus } from './../../../common/buses/EventBus';
+import { UserEvents, UserEventingChannel } from './events';
 
-import { UserEvents } from './events';
+// export const userEventBusProvider = (userEventBus: IEventBus<UserEvents>) => {
+//     const enqueueWelcomeEmail = userEventBus.subscribe(UserEventingChannel.USER_SIGNED_UP, payload => {
+//         console.log(`Sent welcome email to address: ${payload.email}.`);
+//     });
 
-const emitter = new events.EventEmitter();
+//     // Push job to queue to process and upload images.
+//     const enqueueImageProcessing = userEventBus.subscribe(UserEventingChannel.USER_SIGNED_UP, payload => {
+//         console.log(`Enqueued image processing job for id: ${payload.id}`);
+//     });
 
-// TODO: Make EventEmitter type-safe, make listeners DRY, refactor to proper domain events.
+//     // Push job to queue to send Slack Notification to company channel.
+//     const sendSlackNotification = userEventBus.subscribe(UserEventingChannel.USER_SIGNED_UP, payload => {
+//         console.log(`Sent Slack Notification for new sign up. User had id ${payload.id}`);
+//     });
 
-// Push job to queue to send welcome email.
-emitter.on('userSignedUp', (payload: UserEvents['onUserSignedUp']) => {
-    console.log(payload)
-});
-
-// Push job to queue to process and upload images.
-emitter.on('userSignedUp', (payload: UserEvents['onUserSignedUp']) => {
-    
-});
-
-// Push job to queue to send Slack Notification to company channel.
-emitter.on('userSignedUp', (payload: UserEvents['onUserSignedUp']) => {
-    
-});
-
-// Publish Google Analytics event.
-emitter.on('userSignedUp', (payload: UserEvents['onUserSignedUp']) => {
-    
-});
+//     // Publish Google Analytics event.
+//     const pushGAEvent = userEventBus.subscribe(UserEventingChannel.USER_SIGNED_UP, payload => {
+//         console.log(`Investors are happy. Pushed Google Analytics event. ${payload.id}`)
+//     });
+// };
