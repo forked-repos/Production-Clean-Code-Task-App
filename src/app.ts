@@ -1,15 +1,21 @@
 import express from 'express';
 
-import { AwilixContainer } from 'awilix';
+import { AwilixContainer, asValue } from 'awilix';
 import { scopePerRequest, loadControllers } from 'awilix-express';
-import { asValue } from 'awilix';
+
 import ExpressHttpResponseHandler from './common/http/express/ExpressHttpResponseHandler';
+
+import { userEventBusProvider } from './features/users/observers/onUserSignedUp';
+import { createEventBus } from './common/buses/EventBus';
+import { UserEvents } from './features/users/observers/events';
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+
+    const userEventBus = createEventBus<UserEvents>();
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         container.register({ 
