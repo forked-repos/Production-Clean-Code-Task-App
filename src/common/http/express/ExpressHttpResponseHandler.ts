@@ -79,6 +79,7 @@ export default class ExpressHttpResponseHandler implements IExpressHttpResponseH
     }
 
     public fromError(error: Error, operationalDomain?: string): Response {
+        console.log(error)
         const fallbackError = ApplicationErrors.UnexpectedError.create(operationalDomain)
         if (error instanceof BaseErrors.DomainError) {
             const serializedError = error.serializeError();

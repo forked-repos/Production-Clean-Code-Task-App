@@ -5,9 +5,9 @@ import { scopePerRequest, loadControllers } from 'awilix-express';
 
 import ExpressHttpResponseHandler from './common/http/express/ExpressHttpResponseHandler';
 
-import { userEventBusProvider } from './features/users/observers/onUserSignedUp';
-import { createEventBus } from './common/buses/EventBus';
-import { UserEvents } from './features/users/observers/events';
+import { EventBuses } from './loaders/loadBuses';
+
+import './features/users/observers/onUserSignedUp'
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();
@@ -15,11 +15,12 @@ export default (container: AwilixContainer): express.Application => {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    const userEventBus = createEventBus<UserEvents>();
+    const masterBus = EventBuses.masterEventBus;
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         container.register({ 
-            httpContext: asValue({ req, res })
+            httpContext: asValue({ req, res }),
+            eventBusMaster: asValue(masterBus)
         });
 
         next();

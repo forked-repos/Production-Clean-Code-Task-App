@@ -31,6 +31,9 @@ import { UserEvents, UserEventingChannel } from '../observers/events';
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import { mappers } from '../mappers/domain-egress-dto/mappers';
+import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
+import { EventBuses } from './../../../loaders/loadBuses';
+
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -41,6 +44,8 @@ export interface IUserService {
 }
 
 export default class UserService implements IUserService {
+    private readonly userEventBus: IEventBus<UserEvents>;
+
     public constructor (
         // Data Access
         private readonly userRepository: IUserRepository,
@@ -52,8 +57,12 @@ export default class UserService implements IUserService {
 
         // Misc
         private readonly dataValidator: IDataValidator,
-        private readonly userEventBus: IEventBus<UserEvents>
-    ) {}
+
+        // Event Bus
+        eventBusMaster: IEventBusMaster<{ userEventBus: typeof EventBuses.userEventBus }>
+    ) {
+        this.userEventBus = eventBusMaster.getBus('userEventBus');
+    }
 
     public async signUpUser(userDTO: CreateUserDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(UserValidators.createUser, userDTO);

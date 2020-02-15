@@ -26,6 +26,8 @@ import UserService from '../UserService';
 import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
 import { UserEvents } from '../../observers/events';
+import { IEventBusMaster, EventBusMaster } from './../../../../common/buses/MasterEventBus';
+
 
 
 let userRepository: FakeUserRepository;
@@ -33,7 +35,7 @@ let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;
 let authService: FakeAuthenticationService;
 let dataValidator: FakeDataValidator;
-let userEventBus: IEventBus<UserEvents>;
+let masterEventBus;
 
 // SUT:
 let userService: UserService;
@@ -44,7 +46,7 @@ beforeEach(() => {
     unitOfWorkFactory = mock<IUnitOfWorkFactory>();
     authService = new FakeAuthenticationService();
     dataValidator = new FakeDataValidator();
-    userEventBus = mock<IEventBus<UserEvents>>();
+    masterEventBus = new EventBusMaster({ userEventBus: mock<IEventBus<UserEvents>>() });
 
     userService = new UserService(
         userRepository,
@@ -52,7 +54,7 @@ beforeEach(() => {
         instance(unitOfWorkFactory),
         authService,
         dataValidator,
-        instance(userEventBus)
+        masterEventBus
     );
 
     dataValidator.allowBadData(false);

@@ -32,7 +32,7 @@ export interface IEventBus<Events extends EventBusInternal> {
 /**
  * Creates an Event Bus for the provided Event Mappings.
  */
-export function createEventBus<Events extends Record<Channel, any>>() {
+export function createEventBus<Events extends EventBusInternal>() {
     const EventBus = (): IEventBus<Events> => {
         const observerMap: Map<keyof Events, Observer<any>[]> = new Map();
 
