@@ -59,7 +59,7 @@ export default class UserService implements IUserService {
         private readonly dataValidator: IDataValidator,
 
         // Event Bus
-        eventBusMaster: IEventBusMaster<{ userEventBus: typeof EventBuses.userEventBus }>
+        eventBusMaster: IEventBusMaster<{ userEventBus: IEventBus<UserEvents> }>
     ) {
         this.userEventBus = eventBusMaster.getBus('userEventBus');
     }
