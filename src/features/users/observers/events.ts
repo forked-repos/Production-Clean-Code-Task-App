@@ -1,5 +1,3 @@
-import { ChannelPayload, EventBusInternal } from "../../../common/buses/EventBus";
-
 // Channel Enumeration
 export enum UserEventingChannel {
     USER_SIGNED_UP = 'userSignedUp',
@@ -7,16 +5,17 @@ export enum UserEventingChannel {
     // ...
 }
 
+export interface UserDataEvent {
+    id: string;
+    firstName: string;
+    email: string;
+}
+
+export interface UserSignedUpEvent extends UserDataEvent {}
+export interface UserDeletedAccountEvent extends UserDataEvent {}
+
 // Mapping of Channel Name to Event Payload.
 export type UserEvents = {
-    [UserEventingChannel.USER_SIGNED_UP]: {
-        id: string;
-        firstName: string;
-        email: string;
-    },
-    [UserEventingChannel.USER_DELETED_ACCOUNT]: {
-        id: string;
-        firstName: string;
-        email: string;
-    }
+    [UserEventingChannel.USER_SIGNED_UP]: UserSignedUpEvent,
+    [UserEventingChannel.USER_DELETED_ACCOUNT]: UserDeletedAccountEvent
 };

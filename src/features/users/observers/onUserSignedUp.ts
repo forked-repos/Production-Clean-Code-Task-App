@@ -1,8 +1,21 @@
-import { UserEventingChannel } from './events';
+import { UserEventingChannel, UserSignedUpEvent } from './events';
 import { EventBuses } from '../../../loaders/loadBuses';
+import { IEventHandler } from '../../../common/buses/EventBus';
 
 const busMaster = EventBuses.masterEventBus;
 const userEventBus = busMaster.getBus('userEventBus');
+
+class EnqueueWelcomeEmailHandler implements IEventHandler<UserSignedUpEvent> {
+    handleEvent(event: UserSignedUpEvent): void {
+        throw new Error("Method not implemented.");
+    }
+}
+
+class EnqueueImageProcessHandler implements IEventHandler<UserSignedUpEvent> {
+    handleEvent(event: UserSignedUpEvent): void {
+        throw new Error("Method not implemented.");
+    }
+}
 
 const userSignedUpHandlersProvider = () => {
     const enqueueWelcomeEmail = userEventBus.subscribe(UserEventingChannel.USER_SIGNED_UP, payload => {
