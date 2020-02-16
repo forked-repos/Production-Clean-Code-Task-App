@@ -1,6 +1,6 @@
 # Clean Task App Example for Production
 
-This is not your ordinary task app. It is a feature-rich Task Management application built from the ground up in TypeScript and PostgreSQL with no frameworks and no "magic". Heavily inspired by many of the well-know .NET Enterprise Patterns, such as three-layer architecture and Unit of Work, this application depicts multiple architectural best practices and utilizes technologies, such as Job Queues, that you'd see in production. 
+This is not your ordinary task app. It is a feature-rich Task Management application built from the ground up in TypeScript and PostgreSQL with no frameworks and no "magic". Heavily inspired by many of the well-known .NET Enterprise Patterns, such as three-layer architecture and Unit of Work, this application depicts multiple architectural best practices and utilizes technologies, such as Job Queues, that you'd see in production. 
 
 ### Table of Contents
 
@@ -28,6 +28,7 @@ This is not your ordinary task app. It is a feature-rich Task Management applica
   - Architectural Patterns
     - Controllers/Services/Repositories
     - Command Query Separation (CQS)
+    - Event Bus
 - Testing
   - No More Mocks
   - xUnit Testing Patterns
