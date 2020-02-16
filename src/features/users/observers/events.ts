@@ -20,5 +20,3 @@ export type UserEvents = {
         email: string;
     }
 };
-
-const value = 'a' as unknown as string;

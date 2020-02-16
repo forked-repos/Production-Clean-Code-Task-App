@@ -28,8 +28,6 @@ import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
 import { UserEvents } from '../../observers/events';
 import { IEventBusMaster, EventBusMaster } from './../../../../common/buses/MasterEventBus';
 
-
-
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;

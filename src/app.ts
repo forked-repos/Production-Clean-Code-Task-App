@@ -9,6 +9,7 @@ import { EventBuses } from './loaders/loadBuses';
 
 import './features/users/observers/onUserSignedUp';
 import './features/users/observers/onUserDeletedAccount';
+import './features/tasks/observers/taskCreated';
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();

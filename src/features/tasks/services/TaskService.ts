@@ -7,6 +7,9 @@ import { TaskValidators } from '../validation/taskValidation';
 import { CommonErrors } from '../../../common/errors/errors';
 import { Task } from './../models/domain/taskDomain';
 import UpdateTaskDTO from './../dtos/ingress/updateTaskDTO';
+import { IEventBus } from '../../../common/buses/EventBus';
+import { TaskEvents, TaskEventingChannel } from '../observers/events';
+import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
 
 export interface ITaskService {
     createNewTask(createTaskDTO: CreateTaskDTO): Promise<void>;
@@ -14,11 +17,16 @@ export interface ITaskService {
 }
 
 export default class TaskService {
+    private readonly taskEventBus: IEventBus<TaskEvents>;
+
     public constructor (
         private readonly taskRepository: ITaskRepository,
         private readonly unitOfWorkFactory: IUnitOfWorkFactory,
-        private readonly dataValidator: IDataValidator
-    ) {}
+        private readonly dataValidator: IDataValidator,
+        eventBusMaster: IEventBusMaster<{ taskEventBus: IEventBus<TaskEvents> }>
+    ) {
+        this.taskEventBus = eventBusMaster.getBus('taskEventBus');
+    }
 
     public async createNewTask(createTaskDTO: CreateTaskDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(TaskValidators.createTask, createTaskDTO);
@@ -29,6 +37,12 @@ export default class TaskService {
         const task: Task = { id: 'create-an-id', ...createTaskDTO };
         
         await this.taskRepository.addTask(task);
+
+        this.taskEventBus.dispatch(TaskEventingChannel.TASK_CREATED, {
+            id: task.id,
+            name: task.name,
+            dueDate: task.dueDate
+        });
     }
 
     public async editTask(targetId: string, updateTaskDTO: UpdateTaskDTO): Promise<void> {

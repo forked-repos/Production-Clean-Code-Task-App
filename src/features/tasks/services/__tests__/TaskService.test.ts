@@ -7,10 +7,14 @@ import TaskService from './../TaskService';
 import { mock, instance } from 'ts-mockito';
 import { CommonErrors } from "../../../../common/errors/errors";
 import UpdateTaskDTO from './../../dtos/ingress/updateTaskDTO';
+import { EventBusMaster } from "../../../../common/buses/MasterEventBus";
+import { IEventBus } from "../../../../common/buses/EventBus";
+import { TaskEvents } from "../../observers/events";
 
 let taskRepository: FakeTaskRepository;
 let unitOfWorkFactory: IUnitOfWorkFactory;
 let dataValidator: FakeDataValidator;
+let masterEventBus;
 
 let taskService: TaskService;
 
@@ -18,11 +22,13 @@ beforeEach(() => {
     taskRepository = new FakeTaskRepository();
     unitOfWorkFactory = mock<IUnitOfWorkFactory>();
     dataValidator = new FakeDataValidator();
+    masterEventBus = new EventBusMaster({ taskEventBus: mock<IEventBus<TaskEvents>>() });
 
     taskService = new TaskService(
         taskRepository,
         instance(unitOfWorkFactory),
-        dataValidator
+        dataValidator,
+        masterEventBus
     );
 });
 
