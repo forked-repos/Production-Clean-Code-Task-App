@@ -1,17 +1,25 @@
 module.exports = {
   	development: {
     	client: "postgresql",
-    	connection: {
-      		filename: "./dev.sqlite3"
-    	}
+		connection: {
+			host: '127.0.0.1',
+            port: 5433,
+			database: "task_management",
+			user: "postgres",
+			password: "root"
+		},
+		migrations: {
+			tableName: 'users',
+			directory: './../build/migrations'
+		}
   	},
 
   	staging: {
 		client: "postgresql",
 		connection: {
-			database: "my_db",
-			user: "username",
-			password: "password"
+			database: "task_management",
+			user: "postgres",
+			password: "root"
 		},
 		pool: {
 			min: 2,

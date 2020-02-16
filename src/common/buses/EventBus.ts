@@ -1,9 +1,10 @@
 // I know, I know. I could have done this with classes. But, functions are fun.
 
 export type Channel = string;
+export type ChannelPayload = { [key: string]: any }
 export type Observer<Payload> = (payload: Payload) => void;
 
-export type EventBusInternal = Record<Channel, any>;
+export type EventBusInternal = Record<string, ChannelPayload>;
 export type EventBus = IEventBus<EventBusInternal>;
 
 export interface IEventBus<Events extends EventBusInternal> {

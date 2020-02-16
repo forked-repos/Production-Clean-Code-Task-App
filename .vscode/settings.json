@@ -2,5 +2,6 @@
     "cSpell.words": [
         "postgresql"
     ],
-    "eslint.enable": false
+    "eslint.enable": false,
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }

@@ -1,7 +1,8 @@
 import * as Knex from "knex";
 
-export const up = async (knex: Knex): Promise<any> => {
+export const up = (knex: Knex)  => {
     // TODO: Add array for S3 URLs here.
+    //await knex.schema.dropTableIfExists('users'); // Change this before prod!
     knex.schema.createTable('users', table => {
         table.increments('user_id');
         table.string('first_name', 25).notNullable();
@@ -14,7 +15,7 @@ export const up = async (knex: Knex): Promise<any> => {
 }
 
 
-export const down = async (knex: Knex): Promise<any> => {
+export const down = (knex: Knex) => {
     knex.schema.dropTableIfExists('users');
 }
 
