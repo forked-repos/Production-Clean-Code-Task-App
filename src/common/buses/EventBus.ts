@@ -1,28 +1,37 @@
 // I know, I know. I could have done this with classes. But, functions are fun.
 
-export type Channel = string;
-export type ChannelPayload = { [key: string]: any }
-export type Observer<Payload> = (payload: Payload) => void;
+export interface IEvent {
+    [key: string]: any
+}
 
-export type EventBusInternal = Record<string, ChannelPayload>;
-export type EventBus = IEventBus<EventBusInternal>;
+export type Observer<TEvent extends IEvent> = (payload: TEvent) => void;
 
-export interface IEventBus<Events extends EventBusInternal> {
+export type ClassHandlerOrObserver<TEvent extends IEvent> = Observer<TEvent> | IEventHandler<TEvent>;
+
+export interface IEventHandler<TEvent extends IEvent> {
+    handleEvent(event: TEvent): void;
+}
+
+export interface BusDefinition {
+    [key: string]: IEvent;
+}
+
+export interface IEventBus<Events extends BusDefinition> {
     /**
-     * Subscribes a given Observer as a listener for events on the provided Channel.
-     * @param channel  The Bus channel upon which to observe events.
-     * @param observer The Observer callback to consume events.
+     * Subscribes a given handler or observer as a listener for events on the provided Channel.
+     * @param channel           The Bus channel upon which to consume events.
+     * @param handlerOrObserver The handler/observer callback to consume events.
      */
-    subscribe<K extends keyof Events>(channel: K, observer: Observer<Events[K]>): Observer<Events[K]>;
+    subscribe<K extends keyof Events>(channel: K, handlerOrObserver: ClassHandlerOrObserver<Events[K]>): ClassHandlerOrObserver<Events[K]>;
 
     /**
-     * Removes a given Observer from a given Channel.
-     * @param channel  The Bus channel from which to remove the Observer.
-     * @param observer The Observer callback to remove from the Channel.
+     * Removes a given handler/observer from a given Channel.
+     * @param channel           The Bus channel from which to remove the Observer.
+     * @param handlerOrObserver The handler/observer callback to remove from the Channel.
      */
-    unsubscribe<K extends keyof Events>(channel: K, observer: Observer<Events[K]>): void;
+    unsubscribe<K extends keyof Events>(channel: K, handlerOrObserver: ClassHandlerOrObserver<Events[K]>): void;
 
-    /**
+     /**
      * Dispatches an event with a given payload upon the provided Channel.
      * @param channel The Bus channel upon which to dispatch an event.
      * @param payload The payload to emit.
@@ -31,36 +40,41 @@ export interface IEventBus<Events extends EventBusInternal> {
 }
 
 /**
- * Creates an Event Bus for the provided Event Mappings.
+ * Creates an Event Bus.
  */
-export function createEventBus<Events extends EventBusInternal>() {
+export function createEventBus<Events extends BusDefinition>() {
     const EventBus = (): IEventBus<Events> => {
-        const observerMap: Map<keyof Events, Observer<any>[]> = new Map();
+        const listenerMap: Map<keyof Events, (Observer<IEvent> | IEventHandler<IEvent>)[]> = new Map();
 
         return {
-            subscribe: <K extends keyof Events>(channel: K, observer: Observer<Events[K]>): Observer<Events[K]> => {
-                console.log('subscribe')
-                if (!observerMap.has(channel)) {
-                    observerMap.set(channel, [observer] as Observer<any>[])
+            subscribe: <K extends keyof Events>(channel: K, handlerOrObserver: ClassHandlerOrObserver<Events[K]>): ClassHandlerOrObserver<Events[K]> => {
+                if (!listenerMap.has(channel)) {
+                    listenerMap.set(channel, [handlerOrObserver] as ClassHandlerOrObserver<IEvent>[]);
                 } else {
-                    observerMap.get(channel)!.push(observer);
+                    listenerMap.get(channel)!.push(handlerOrObserver as ClassHandlerOrObserver<IEvent>);
                 }
-        
-                return observer;
+                
+                return handlerOrObserver;
             },
-        
-            unsubscribe: <K extends keyof Events>(channel: K, targetObserver: Observer<Events[K]>) => {
-                if (observerMap.has(channel)) {
-                    const observers = observerMap.get(channel)!;
-                    const observersWithoutTarget = observers.filter(observer => observer !== targetObserver);
-                    observerMap.set(channel, observersWithoutTarget)
+
+            unsubscribe: <K extends keyof Events>(channel: K, targetHandlerOrObserver: ClassHandlerOrObserver<Events[K]>): void => {
+                if (listenerMap.has(channel)) {
+                    const handlers = listenerMap.get(channel)!;
+                    const handlersWithoutTarget = handlers.filter(handlerOrObserver => handlerOrObserver !== targetHandlerOrObserver);
+                    listenerMap.set(channel, handlersWithoutTarget);
                 }
             },
-        
-            dispatch: <K extends keyof Events>(channel: K, payload: Events[K]) => {
-                if (observerMap.has(channel)) {
-                    const observers = observerMap.get(channel)!;
-                    observers.forEach(observer => observer(payload));
+
+            dispatch<K extends keyof Events>(channel: K, payload: Events[K]): void {
+                if (listenerMap.has(channel)) {
+                    const handlers = listenerMap.get(channel)!;
+                    handlers.forEach(handler => {
+                        if (typeof handler === 'function') {
+                            handler(payload)
+                        } else {
+                            handler.handleEvent(payload);
+                        }
+                    });
                 }
             }
         }
@@ -68,4 +82,3 @@ export function createEventBus<Events extends EventBusInternal>() {
 
     return EventBus();
 }
-

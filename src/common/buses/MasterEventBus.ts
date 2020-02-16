@@ -1,36 +1,45 @@
-import { EventBus, IEventBus, Observer, EventBusInternal, Channel } from './EventBus';
-import { EventBuses } from '../../loaders/loadBuses';
+import { IEventBus, ClassHandlerOrObserver } from './EventBus'
 
-interface BusDefinition {
-    [key: string]: IEventBus<any>
+
+interface MasterBusDefinition {
+    [key: string]: IEventBus<any>;
 }
 
-export interface IEventBusMaster<T extends BusDefinition>  {
+export interface IEventBusMaster<T extends MasterBusDefinition> {
     getBus<K extends keyof T>(busName: K): T[K];
-    
+
     subscribe<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, observer: Observer<Y[U]>): Observer<Y[U]>;
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        handlerOrObserver: ClassHandlerOrObserver<BusEvents[EventName]>
+    ): ClassHandlerOrObserver<BusEvents[EventName]>;
 
     unsubscribe<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, observer: Observer<Y[U]>): void;
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents,
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        handlerOrObserver: ClassHandlerOrObserver<BusEvents[EventName]>
+    ): void;
 
     dispatch<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, payload: Y[U]): void;
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        payload: BusEvents[EventName]
+    ): void;
 }
 
-/**
- * A master bus to make working with multiple buses easier.
- */
-export class EventBusMaster<T extends BusDefinition> implements IEventBusMaster<T> {
+export class EventBusMaster<T extends MasterBusDefinition> implements IEventBusMaster<T> {
     public constructor (private busMap: T) {}
 
     public getBus<K extends keyof T>(busName: K): T[K] {
@@ -38,27 +47,39 @@ export class EventBusMaster<T extends BusDefinition> implements IEventBusMaster<
     }
 
     public subscribe<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, observer: Observer<Y[U]>): Observer<Y[U]> {
-        this.busMap[busName].subscribe(channel, observer);
-        return observer;
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        handler: ClassHandlerOrObserver<BusEvents[EventName]>
+    ): ClassHandlerOrObserver<BusEvents[EventName]> {
+        this.busMap[busName].subscribe(channel, handler);
+        return handler;
     }
 
     public unsubscribe<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, observer: Observer<Y[U]>): void {
-        this.busMap[busName].unsubscribe(channel, observer);
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        handler: ClassHandlerOrObserver<BusEvents[EventName]>
+    ): void {
+        this.busMap[busName].unsubscribe(channel, handler);
     }
 
     public dispatch<
-        K extends keyof T,
-        Y extends T[K] extends IEventBus<infer A> ? A : never,
-        U extends keyof Y
-    >(busName: K, channel: U, payload: Y[U]) {
-        this.busMap[busName].dispatch(channel, payload);
+        BusName extends keyof T,
+        BusEvents extends T[BusName] extends IEventBus<infer A> ? A : never,
+        EventName extends keyof BusEvents
+    >(
+        busName: BusName, 
+        channel: EventName, 
+        payload: BusEvents[EventName]
+    ): void {
+        this.busMap[busName].dispatch(channel as string, payload);
     }
 }
