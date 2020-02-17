@@ -1,3 +1,5 @@
+import { IEvent } from './../../../common/buses/EventBus';
+
 // Channel Enumeration
 export enum UserEventingChannel {
     USER_SIGNED_UP = 'userSignedUp',

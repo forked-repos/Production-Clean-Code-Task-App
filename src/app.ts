@@ -7,9 +7,8 @@ import ExpressHttpResponseHandler from './common/http/express/ExpressHttpRespons
 
 import { EventBuses } from './loaders/loadBuses';
 
-import './features/users/observers/onUserSignedUp';
-import './features/users/observers/onUserDeletedAccount';
-import './features/tasks/observers/taskCreated';
+import { IEventBusEventHandler } from './loaders/loadDecorator';
+import { ClassHandlerOrObserver } from './common/buses/EventBus';
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();
@@ -27,6 +26,19 @@ export default (container: AwilixContainer): express.Application => {
 
         next();
     });
+
+    // Subscribing Event Handlers
+    (() => {
+        const busHandlerMap = IEventBusEventHandler.getEventHandlerImplementations();
+
+        busHandlerMap.forEach((handlers, busNameChannel) => {
+            handlers.forEach(handler => masterBus.subscribe(
+                busNameChannel.busName,
+                busNameChannel.channel,
+                container.resolve(handler.name) as ClassHandlerOrObserver<any>
+            ));
+        });
+    })();
 
     app.use(scopePerRequest(container));
     app.use(loadControllers('./../build/features/*/controllers/*.js', { cwd: __dirname }));

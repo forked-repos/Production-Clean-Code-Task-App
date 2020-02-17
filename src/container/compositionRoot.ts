@@ -29,6 +29,7 @@ import ExpressHttpResponseHandler from './../common/http/express/ExpressHttpResp
 import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
 
 import { validate } from './../utils/wrappers/joi/joiWrapper';
+import UserSignedUpEventHandler from './../features/users/observers/onUserSignedUp';
 
 
 export const configureContainer = (): AwilixContainer => {
@@ -48,6 +49,11 @@ export const configureContainer = (): AwilixContainer => {
         userRepository: asClass(UserRepository, lifetimeScoped).singleton(),
         taskRepository: asClass(TaskRepository).singleton()
     });
+
+    // Register Event Handlers
+    container.register({
+        UserSignedUpEventHandler: asClass(UserSignedUpEventHandler)
+    })
 
     // Register Mappers
     container.register({

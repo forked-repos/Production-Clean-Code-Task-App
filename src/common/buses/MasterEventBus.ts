@@ -1,7 +1,7 @@
 import { IEventBus, ClassHandlerOrObserver } from './EventBus'
 
 
-interface MasterBusDefinition {
+export interface MasterBusDefinition {
     [key: string]: IEventBus<any>;
 }
 
