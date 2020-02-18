@@ -90,6 +90,7 @@ export default class UserService implements IUserService {
         this.userEventBus.dispatch(UserEventingChannel.USER_SIGNED_UP, {
             id: user.id,
             firstName: user.firstName,
+            lastName: user.lastName,
             email: user.email
         });
     }
@@ -170,6 +171,7 @@ export default class UserService implements IUserService {
         this.userEventBus.dispatch(UserEventingChannel.USER_DELETED_ACCOUNT, {
             id: user.id,
             firstName: user.firstName,
+            lastName: user.lastName,
             email: user.email
         });
     }

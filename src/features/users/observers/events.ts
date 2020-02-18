@@ -10,6 +10,7 @@ export enum UserEventingChannel {
 export interface UserDataEvent {
     id: string;
     firstName: string;
+    lastName: string;
     email: string;
 }
 

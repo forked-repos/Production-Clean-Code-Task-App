@@ -39,6 +39,8 @@ export interface IEventBus<Events extends BusDefinition> {
     dispatch<K extends keyof Events>(channel: K, payload: Events[K]): void;
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Creates an Event Bus.
  */
@@ -76,7 +78,7 @@ export function createEventBus<Events extends BusDefinition>() {
                         }
                     });
                 }
-            }
+            },
         }
     }
 

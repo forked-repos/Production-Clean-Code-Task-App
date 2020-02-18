@@ -29,7 +29,9 @@ import ExpressHttpResponseHandler from './../common/http/express/ExpressHttpResp
 import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
 
 import { validate } from './../utils/wrappers/joi/joiWrapper';
+
 import UserSignedUpEventHandler from './../features/users/observers/onUserSignedUp';
+import BullTaskQueueService from "../common/operations/queueing/services/BullTaskQueueService";
 
 
 export const configureContainer = (): AwilixContainer => {
@@ -41,7 +43,8 @@ export const configureContainer = (): AwilixContainer => {
     container.register({
         authService: asClass(AuthenticationService, lifetimeScoped),
         userService: asClass(UserService, lifetimeScoped),
-        taskService: asClass(TaskService, lifetimeScoped)
+        taskService: asClass(TaskService, lifetimeScoped),
+        taskQueueService: asClass(BullTaskQueueService)
     });
 
     // Register Repositories
@@ -53,7 +56,7 @@ export const configureContainer = (): AwilixContainer => {
     // Register Event Handlers
     container.register({
         UserSignedUpEventHandler: asClass(UserSignedUpEventHandler)
-    })
+    });
 
     // Register Mappers
     container.register({
