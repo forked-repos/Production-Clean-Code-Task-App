@@ -7,7 +7,7 @@ export enum UserEventingChannel {
     // ...
 }
 
-export interface UserDataEvent {
+export interface UserDataEvent extends IEvent {
     id: string;
     firstName: string;
     lastName: string;

@@ -1,6 +1,5 @@
 import { IEventBus, ClassHandlerOrObserver } from './EventBus'
 
-
 export interface MasterBusDefinition {
     [key: string]: IEventBus<any>;
 }

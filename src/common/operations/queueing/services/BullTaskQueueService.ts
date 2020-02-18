@@ -4,6 +4,7 @@ import { backOff } from 'exponential-backoff';
 export interface ITaskQueueService {
     addWelcomeEmail(firstName: string, lastName: string, emailAddress: string): Promise<void>;
     addAvatarProcessing(buffer: Buffer): Promise<void>;
+    addTaskNotification(taskName: string, dueDate?: Date, retry?: boolean): Promise<void>;
 }
 
 export default class BullTaskQueueService implements ITaskQueueService {
@@ -27,5 +28,9 @@ export default class BullTaskQueueService implements ITaskQueueService {
         } catch (e) {
             console.log(e)
         }
+    }
+
+    public async addTaskNotification(taskName: string, dueDate?: Date, retry: boolean = true): Promise<void> {
+        console.log(`Task is due on ${dueDate}`)
     }
 }
