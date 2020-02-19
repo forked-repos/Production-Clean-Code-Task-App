@@ -1,4 +1,4 @@
-import { IEvent } from './../../../common/buses/EventBus';
+import { IEvent } from '../../../common/buses/EventBus';
 
 // Channel Enumeration
 export enum UserEventingChannel {

@@ -25,7 +25,7 @@ import _, { Many } from 'lodash';
 import UserService from '../UserService';
 import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
-import { UserEvents } from '../../observers/events';
+import { UserEvents } from '../../handlers/events';
 import { IEventBusMaster, EventBusMaster } from './../../../../common/buses/MasterEventBus';
 
 let userRepository: FakeUserRepository;
@@ -194,6 +194,16 @@ describe('loginUser', () => {
         await expect(userService.loginUser(dto))
             .rejects
             .toEqual(ApplicationErrors.UnexpectedError.create());
+    });
+
+    test('should reject with a ValidationError if bad data is provided', async () => {
+        // Arrange
+        const dto: UserCredentialsDTO = { email: 'addr', password: '12356,>>&*A& '};
+
+        // Act, Assert
+        await expect(userService.loginUser(dto))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Users', '"email" must be a valid email'))
     });
 });
 

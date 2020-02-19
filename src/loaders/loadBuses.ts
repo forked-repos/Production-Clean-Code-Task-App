@@ -1,5 +1,5 @@
 import { createEventBus, IEventHandler, IEventBus, BusDefinition } from './../common/buses/EventBus';
-import { UserEvents, UserEventingChannel } from './../features/users/observers/events';
+import { UserEvents, UserEventingChannel } from '../features/users/handlers/events';
 import { EventBusMaster } from './../common/buses/MasterEventBus';
 import { TaskEvents } from '../features/tasks/observers/events';
 

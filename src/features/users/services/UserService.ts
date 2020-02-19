@@ -25,7 +25,7 @@ import { CreateUserErrors } from '../errors/errors';
 
 // Eventing
 import { IEventBus } from './../../../common/buses/EventBus';
-import { UserEvents, UserEventingChannel } from '../observers/events';
+import { UserEvents, UserEventingChannel } from '../handlers/events';
 
 // Misc
 import { UserValidators } from '../validation/userValidation';
@@ -93,6 +93,8 @@ export default class UserService implements IUserService {
             lastName: user.lastName,
             email: user.email
         });
+
+        console.log('Dispatched event');
     }
 
     public async loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO> {

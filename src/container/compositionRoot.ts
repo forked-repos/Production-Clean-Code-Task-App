@@ -30,8 +30,10 @@ import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/
 
 import { validate } from './../utils/wrappers/joi/joiWrapper';
 
-import UserSignedUpEventHandler from './../features/users/observers/onUserSignedUp';
+import { PushProcessAvatarJob, PushWelcomeEmailJob } from '../features/users/handlers/userSignedUpHandlers';
 import BullTaskQueueService from "../common/operations/queueing/services/BullTaskQueueService";
+
+
 
 
 export const configureContainer = (): AwilixContainer => {
@@ -55,7 +57,8 @@ export const configureContainer = (): AwilixContainer => {
 
     // Register Event Handlers
     container.register({
-        UserSignedUpEventHandler: asClass(UserSignedUpEventHandler)
+        PushProcessAvatarJob: asClass(PushProcessAvatarJob),
+        PushWelcomeEmailJob: asClass(PushWelcomeEmailJob)
     });
 
     // Register Mappers
