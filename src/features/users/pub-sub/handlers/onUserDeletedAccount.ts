@@ -1,5 +1,5 @@
-import { UserEventingChannel } from './events';
-import { EventBuses } from '../../../loaders/loadBuses';
+import { UserEventingChannel } from '../events';
+import { EventBuses } from '../../../../loaders/loadBuses';
 
 const busMaster = EventBuses.masterEventBus;
 const userEventBus = busMaster.getBus('userEventBus');

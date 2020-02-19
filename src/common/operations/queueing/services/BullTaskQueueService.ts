@@ -10,7 +10,7 @@ let counter = 0;
 
 const sleep = (milliseconds: number) => {
     return new Promise(resolve => setTimeout(resolve, milliseconds))
-  }
+}
 
 export default class BullTaskQueueService implements ITaskQueueService {
     // Queue Retry Options
@@ -21,21 +21,11 @@ export default class BullTaskQueueService implements ITaskQueueService {
     };
 
     public async addWelcomeEmail(firstName: string, lastName: string, emailAddress: string, retry: boolean = true): Promise<void> {
-        const execute = async (context?: AttemptContext) => {
-            if (context) {
-                //console.log('addWelcomeEmailAttempts:', context.attemptNum)
-                if (context.attemptNum > 4) {
-                    Queues.emailQueue.add({ firstName, lastName, emailAddress })
-                } else {
-                    return Promise.reject('Could not push email job')
-                }
-            }
-        }
+        const execute = async (context?: AttemptContext) => await Queues.emailQueue.add({ firstName, lastName, emailAddress })
         retry === true ? await backOff(execute, this.retryOptions) : await execute();
     }
 
     public async addAvatarProcessing(buffer: Buffer, username: string, retry: boolean = true): Promise<void> {
-        //await sleep(5000);
         const execute = async (context?: AttemptContext) => await Queues.imageQueue.add({ buffer, username });
         retry === true ? await backOff(execute, this.retryOptions) : await execute();
    

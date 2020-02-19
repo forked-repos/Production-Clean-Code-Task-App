@@ -9,8 +9,7 @@ module.exports = {
 			password: "root"
 		},
 		migrations: {
-			tableName: 'users',
-			directory: './../build/migrations'
+			directory: './../build/migrations',
 		}
   	},
 

@@ -25,7 +25,7 @@ import _, { Many } from 'lodash';
 import UserService from '../UserService';
 import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
-import { UserEvents } from '../../handlers/events';
+import { UserEvents } from '../../pub-sub/events';
 import { IEventBusMaster, EventBusMaster } from './../../../../common/buses/MasterEventBus';
 
 let userRepository: FakeUserRepository;

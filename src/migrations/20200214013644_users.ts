@@ -1,9 +1,9 @@
 import * as Knex from "knex";
 
-export const up = (knex: Knex)  => {
+export const up = async (knex: Knex)  => {
     // TODO: Add array for S3 URLs here.
-    //await knex.schema.dropTableIfExists('users'); // Change this before prod!
-    knex.schema.createTable('users', table => {
+    //return await knex.schema.dropTableIfExists('users'); // Change this before prod!
+    return await knex.schema.createTableIfNotExists('users', table => {
         table.increments('user_id');
         table.string('first_name', 25).notNullable();
         table.string('last_name', 35).notNullable();

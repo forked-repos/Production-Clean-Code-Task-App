@@ -4,6 +4,7 @@
   "description": "Clean-er coding tactics.",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "start:build": "tsc -w",
     "start:run": "node ./build/server.js",
     "start": "concurrently npm:start:*",

@@ -25,7 +25,7 @@ import { CreateUserErrors } from '../errors/errors';
 
 // Eventing
 import { IEventBus } from './../../../common/buses/EventBus';
-import { UserEvents, UserEventingChannel } from '../handlers/events';
+import { UserEvents, UserEventingChannel } from '../pub-sub/events';
 
 // Misc
 import { UserValidators } from '../validation/userValidation';
