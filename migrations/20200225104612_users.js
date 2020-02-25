@@ -1,9 +1,5 @@
-import * as Knex from "knex";
-
-export const up = async (knex: Knex)  => {
-    // TODO: Add array for S3 URLs here.
-    //return await knex.schema.dropTableIfExists('users'); // Change this before prod!
-    return await knex.schema.createTableIfNotExists('users', table => {
+exports.up = function(knex) {
+    return knex.schema.createTable('users', table => {
         table.increments('user_id');
         table.string('first_name', 25).notNullable();
         table.string('last_name', 35).notNullable();
@@ -12,10 +8,8 @@ export const up = async (knex: Knex)  => {
         table.string('email', 100).notNullable();
         table.specificType('password', 'CHAR(60)').notNullable();
     });
-}
+};
 
-
-export const down = (knex: Knex) => {
+exports.down = function(knex) {
     knex.schema.dropTableIfExists('users');
-}
-
+};

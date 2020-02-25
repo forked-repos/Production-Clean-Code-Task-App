@@ -17,7 +17,11 @@ export class PushWelcomeEmailJob implements IEventHandler<UserSignedUpEvent> {
 
     async handleEvent(event: UserSignedUpEvent) {
         try {
-            await this.taskQueueService.addWelcomeEmail(event.firstName, event.lastName, event.email);
+            await this.taskQueueService.addWelcomeEmail({
+                firstName: event.firstName, 
+                lastName: event.lastName, 
+                emailAddress: event.email
+            });
         } catch (e) {
             console.log('Could not push send email job');
         }

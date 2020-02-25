@@ -83,7 +83,7 @@ export default class UserService implements IUserService {
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
-        const user: User = { id: 'create-an-id', ...userDTO, password: hash };
+        const user: User = { id: 1, ...userDTO, password: hash };
 
         await this.userRepository.addUser(user);
 
@@ -93,8 +93,6 @@ export default class UserService implements IUserService {
             lastName: user.lastName,
             email: user.email
         });
-
-        console.log('Dispatched event');
     }
 
     public async loginUser(credentialsDTO: UserCredentialsDTO): Promise<LoggedInUserResponseDTO> {

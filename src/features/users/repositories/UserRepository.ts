@@ -1,3 +1,5 @@
+import * as Knex from 'knex';
+
 import { User } from './../models/domain/userDomain';
 
 import { IRepository } from './../../../common/repositories/repository';
@@ -6,6 +8,7 @@ import { BaseKnexRepository } from '../../../common/repositories/knex/BaseKnexRe
 import { UserDalEntity } from './../models/entity/userEntity';
 import { IDomainPersistenceMapper } from './../../../common/mappers/domain-dal/mapper';
 import { CommonErrors } from '../../../common/errors/errors';
+import { KnexUnitOfWork } from '../../../common/unit-of-work/knex/KnexUnitOfWork';
 
 export interface IUserRepository extends IRepository<User>, IUnitOfWorkCapable {
     existsByUsername(username: string): Promise<boolean>;
@@ -20,26 +23,33 @@ export interface IUserRepository extends IRepository<User>, IUnitOfWorkCapable {
 export default class UserRepository extends BaseKnexRepository implements IUserRepository {
     private users: UserDalEntity[] = [];
 
+    private readonly dbContext: Knex | Knex.Transaction;
     private readonly mapper: IDomainPersistenceMapper<User, UserDalEntity>;
 
     public constructor (
+        knexInstance: Knex | Knex.Transaction,
         userDomainPersistenceMapper: IDomainPersistenceMapper<User, UserDalEntity>
     ) {
         super();
-
+        this.dbContext = knexInstance;
         this.mapper = userDomainPersistenceMapper;
     }
 
     public async addUser(user: User): Promise<void> {
         return this.handleErrors(async (): Promise<void> => {
+
+            console.log(user)
             const dalUser = this.mapper.toPersistence(user);
-            this.users.push(dalUser);
+            await this.dbContext<UserDalEntity>('users').insert(dalUser);
         });
     }
 
     public async findUserByEmail(email: string): Promise<User> {
         return this.handleErrors(async (): Promise<User> => {
-            const dalUser = this.users.filter(user => user.email === email)[0];
+            const dalUser = await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where({ email })
+                .first();
 
             if (!dalUser) 
                 return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
@@ -50,7 +60,10 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async findUserById(id: string): Promise<User> {
         return this.handleErrors(async (): Promise<User> => {
-            const dalUser = this.users.filter(user => user.user_id === id)[0];
+            const dalUser = await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where({ user_id: id })
+                .first();
 
             if (!dalUser) 
                 return Promise.reject(CommonErrors.NotFoundError.create('Users'));
@@ -61,46 +74,63 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async updateUser(updatedUser: User): Promise<void> {
         return this.handleErrors(async (): Promise<void> => {
-            const dalUser = this.mapper.toPersistence(updatedUser);
-            const doesUserExist = await this.existsById(dalUser.user_id);
+            const dalUpdatedUser = this.mapper.toPersistence(updatedUser);
+            const doesUserExist = await this.existsById(dalUpdatedUser.user_id);
 
             if (!doesUserExist)
                 return Promise.reject(CommonErrors.NotFoundError.create('Users'));
 
-            const userIndex = this.users.indexOf(dalUser);
-            this.users[userIndex] = dalUser;
+            await this.dbContext<UserDalEntity>('users')
+                .select('*')
+                .where({ user_id: dalUpdatedUser.user_id })
+                .update(dalUpdatedUser);
         });
     }
 
     public async exists(t: User): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => this.mapper.toDomain(user) == t)[0];
+            const dalUser = this.mapper.toPersistence(t);
+            return !!await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where(dalUser)
+                .first();
         });
     }
 
     public async existsById(id: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => user.user_id === id)[0];
+            return !!await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where({ user_id: id })
+                .first();
         });
     }
 
     public async existsByUsername(username: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => user.username === username)[0];
+            return !!await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where({ username })
+                .first();
         });
     }
 
     public async existsByEmail(email: string): Promise<boolean> {
         return this.handleErrors(async (): Promise<boolean> => {
-            return !!this.users.filter(user => user.email === email)[0];
+            return !!await this.dbContext<UserDalEntity>('users')
+                .select()
+                .where({ email })
+                .first();
         });
     }
 
     public async removeUserById(id: string): Promise<void> {
-        throw new Error();
+        return this.handleErrors(async (): Promise<void> => {
+            await this.dbContext<UserDalEntity>('users').where({ user_id: id }).del();
+        });
     }
 
     public forUnitOfWork(unitOfWork: IUnitOfWork): this {
-        throw new Error("Method not implemented.");
+        return new UserRepository((unitOfWork as KnexUnitOfWork).trxContext, this.mapper) as this;
     }
 }

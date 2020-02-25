@@ -7,5 +7,5 @@ export namespace Queues {
     export const imageQueue = new Queue('process images', 'redis://127.0.0.1:6379');
 
     emailQueue.process(emailWorkerProvider());
-    imageQueue.process(imageWorkerProvider())
+    imageQueue.process(imageWorkerProvider());
 }
