@@ -64,6 +64,10 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
             id
         );
     }
+
+    nextIdentity(): string {
+        return 'id';
+    }
     
     forUnitOfWork(unitOfWork: IUnitOfWork): this {
         throw new Error();

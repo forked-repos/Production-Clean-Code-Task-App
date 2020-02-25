@@ -84,6 +84,10 @@ export class FakeUserRepository extends FakeBaseRepository implements IUserRepos
     async existsById(id: string): Promise<boolean> {
         return !!this.users.filter(user => user.id === id)[0];
     }
+
+    nextIdentity() {
+        return 'id';
+    }
     
     forUnitOfWork(unitOfWork: IUnitOfWork): this {
         return new FakeUserRepository() as this;

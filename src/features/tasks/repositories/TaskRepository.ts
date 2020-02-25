@@ -1,3 +1,6 @@
+
+import * as uuid from 'uuid';
+
 import { IRepository } from './../../../common/repositories/repository';
 import { IUnitOfWorkCapable } from './../../../common/unit-of-work/unit-of-work';
 import { IUnitOfWork } from './../../../common/unit-of-work/unit-of-work';
@@ -54,6 +57,10 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
 
     public async existsById(id: string): Promise<boolean> {
         return this.handleErrors(async () => !!this.tasks.filter(task => task.id === id)[0]);
+    }
+
+    public nextIdentity(): string {
+        return uuid.v4();
     }
 
     public forUnitOfWork(unitOfWork: IUnitOfWork): this {

@@ -1,4 +1,5 @@
 import * as Knex from 'knex';
+import * as uuid from 'uuid';
 
 import { User } from './../models/domain/userDomain';
 
@@ -37,8 +38,6 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
 
     public async addUser(user: User): Promise<void> {
         return this.handleErrors(async (): Promise<void> => {
-
-            console.log(user)
             const dalUser = this.mapper.toPersistence(user);
             await this.dbContext<UserDalEntity>('users').insert(dalUser);
         });
@@ -128,6 +127,10 @@ export default class UserRepository extends BaseKnexRepository implements IUserR
         return this.handleErrors(async (): Promise<void> => {
             await this.dbContext<UserDalEntity>('users').where({ user_id: id }).del();
         });
+    }
+
+    public nextIdentity(): string {
+        return uuid.v4();
     }
 
     public forUnitOfWork(unitOfWork: IUnitOfWork): this {

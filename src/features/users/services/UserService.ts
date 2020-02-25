@@ -15,6 +15,9 @@ import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
 import UserResponseDTO from '../dtos/egress/userResponseDTO';
 import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
 
+// Data
+import { mappers } from '../mappers/domain-egress-dto/mappers';
+
 // Domain
 import { userFactory, User } from '../models/domain/userDomain';
 
@@ -23,17 +26,14 @@ import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
 import { AuthorizationErrors } from '../../auth/errors/errors';
 import { CreateUserErrors } from '../errors/errors';
 
-// Eventing
+// Eventing & Communication
 import { IEventBus } from './../../../common/buses/EventBus';
 import { UserEvents, UserEventingChannel } from '../pub-sub/events';
+import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
 
-// Misc
+// Validation
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
-import { mappers } from '../mappers/domain-egress-dto/mappers';
-import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
-import { EventBuses } from './../../../loaders/loadBuses';
-
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -83,7 +83,8 @@ export default class UserService implements IUserService {
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
-        const user: User = { id: 1, ...userDTO, password: hash };
+        const userID = this.userRepository.nextIdentity();
+        const user: User = userFactory({ ...userDTO, password: hash }, userID);
 
         await this.userRepository.addUser(user);
 

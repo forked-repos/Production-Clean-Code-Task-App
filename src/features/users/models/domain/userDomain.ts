@@ -1,3 +1,5 @@
+import * as uuid from 'uuid';
+
 /**
  * User domain structure.
  */
@@ -11,7 +13,7 @@ export interface User {
     password: string;
 }
 
-export const userFactory = (userProps: Omit<User, 'id'>, id: string): User => ({
-    id: id ? id : 'constant',
+export const userFactory = (userProps: Omit<User, 'id'>, id?: string): User => ({
+    id: id ? id : uuid.v4(),
     ...userProps
 })

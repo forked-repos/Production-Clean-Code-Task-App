@@ -1,6 +1,9 @@
 exports.up = function(knex) {
     return knex.schema.createTable('users', table => {
-        table.increments('user_id');
+        // This is a UUID at the moment. 
+        // Will move to Hi/Lo Algorithm later.
+        // Of course, don't use a string for a UUID in PG.
+        table.string('user_id', 36).notNullable(); 
         table.string('first_name', 25).notNullable();
         table.string('last_name', 35).notNullable();
         table.string('username', 20).notNullable();

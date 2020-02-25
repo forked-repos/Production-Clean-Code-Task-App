@@ -4,6 +4,7 @@
 export interface IRepository<T> {
     exists(t: T): Promise<boolean>;
     existsById(id: string): Promise<boolean>;
+    nextIdentity(): string;
 }
 
 /**
