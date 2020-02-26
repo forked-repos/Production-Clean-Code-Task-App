@@ -5,7 +5,7 @@ import { IDataValidator } from './../../../common/operations/validation/validati
 import CreateTaskDTO from './../dtos/ingress/createTaskDTO';
 import { TaskValidators } from '../validation/taskValidation';
 import { CommonErrors } from '../../../common/errors/errors';
-import { Task } from './../models/domain/taskDomain';
+import { Task, taskFactory } from './../models/domain/taskDomain';
 import UpdateTaskDTO from './../dtos/ingress/updateTaskDTO';
 import { IEventBus } from '../../../common/buses/EventBus';
 import { TaskEvents, TaskEventingChannel } from '../observers/events';
@@ -34,7 +34,8 @@ export default class TaskService {
         if (validationResult.isLeft()) 
             return Promise.reject(CommonErrors.ValidationError.create('Tasks', validationResult.value));
 
-        const task: Task = { id: 'create-an-id', ...createTaskDTO };
+        const taskId = this.taskRepository.nextIdentity();
+        const task: Task = taskFactory(createTaskDTO, taskId);
         
         await this.taskRepository.addTask(task);
 
