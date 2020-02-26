@@ -7,7 +7,7 @@
     "build": "tsc",
     "start:build": "tsc -w",
     "start:run": "node ./build/server.js",
-    "start": "concurrently npm:start:*",
+    "start": "npm run build && npm run start:run",
     "dev": "tsc-watch --onSuccess \"npm run start:run\"",
     "test": "jest --maxWorkers=4"
   },

@@ -88,6 +88,7 @@ export default class UserService implements IUserService {
 
         await this.userRepository.addUser(user);
 
+        // This will be going through the Outbox Pattern later, which will dispatch to the bus with CDC.
         this.userEventBus.dispatch(UserEventingChannel.USER_SIGNED_UP, {
             id: user.id,
             firstName: user.firstName,
