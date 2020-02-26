@@ -78,7 +78,11 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
     }
 
     public async removeTasksByOwnerId(ownerId: string): Promise<void> {
-        throw new Error('Not Implemented');
+        return this.handleErrors(async () => {
+            await this.dbContext<TaskDalEntity>('tasks')
+                .where({ owner: ownerId })
+                .del('*');
+        });
     }
 
     public async exists(t: Task): Promise<boolean> {

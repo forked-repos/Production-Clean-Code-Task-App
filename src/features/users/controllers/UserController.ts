@@ -11,14 +11,17 @@ import UpdateUserDTO from './../dtos/ingress/updateUserDTO';
 import { stripBearerToken } from './../../../common/middleware/auth/stripBearerToken';
 import { verifyAuthProvider } from './../../../common/middleware/auth/verifyAuthToken';
 import { AuthorizationErrors } from '../../auth/errors/errors';
+import BaseController from './../../../common/controllers/BaseController';
 
 
 @route('/api/v1/users')
-export default class UserController {
+export default class UserController extends BaseController {
     public constructor(
         private readonly userService: IUserService,
-        private readonly httpHandler: IExpressHttpResponseHandler
-    ) { }
+        httpHandler: IExpressHttpResponseHandler
+    ) {
+        super(httpHandler)
+    }
 
     @POST()
     async createUser(request: Request, res: Response): Promise<Response> {
@@ -68,12 +71,5 @@ export default class UserController {
             await this.userService.deleteUserById(request.user!.id);
             return this.httpHandler.ok();
         });
-    }
-
-    private async performOnlyIfUserExists(request: Request, operation: (request?: Request) => Promise<Response>): Promise<Response> {
-        if (!request.user) 
-            return this.httpHandler.fromError(AuthorizationErrors.AuthorizationError.create('Users'));
-        else
-            return operation(request);
     }
 }

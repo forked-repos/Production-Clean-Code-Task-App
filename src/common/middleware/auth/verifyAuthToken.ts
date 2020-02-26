@@ -21,8 +21,6 @@ export const verifyAuthProvider = (
 
         const user = await userRepository.findUserById(decodedTokenResult.value.id);
 
-        console.log('have a user')
-
         // Add to the IoC Container here.
         req.user = user;
 
