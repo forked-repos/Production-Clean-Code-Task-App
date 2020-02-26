@@ -11,6 +11,10 @@ export interface ITokenPayload {
     id: string;
 }
 
+export enum AuthType {
+    LOGIN
+}
+
 export interface IAuthenticationService {
     /** Hashes a given password by the given rounds, which defaults to 12. */
     hashPassword(plainTextPassword: string, rounds?: number): Promise<string>;
@@ -19,7 +23,7 @@ export interface IAuthenticationService {
     checkHashMatch(candidate: string, hash: string): Promise<boolean>;
 
     /** Generates an auth token with the specified payload and options. */
-    generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string;
+    generateAuthToken(payload: ITokenPayload, authType?: AuthType): string;
 
     /** Verifies that a token is valid, returns the payload response. */
     verifyAndDecodeAuthToken(token: string, opts?: ITokenDecodingOptions): Either<AuthorizationErrors.AuthorizationError, ITokenPayload>;
@@ -53,7 +57,17 @@ export default class AuthenticationService implements IAuthenticationService {
         }
     }
 
-    public generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string {
+    public generateAuthToken(payload: ITokenPayload, authType?: AuthType): string {
+        let opts: ITokenEncodingOptions | undefined;
+
+        switch(authType) {
+            case AuthType.LOGIN:
+                opts = { expiresIn: '15 minutes' };
+                break;
+            default:
+                opts = undefined;
+        }
+
         try {
             return this.tokenHandler.generateToken(payload, 'my-secret', opts)
         } catch (e) {

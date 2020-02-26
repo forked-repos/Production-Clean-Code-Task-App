@@ -1,5 +1,5 @@
 // Services
-import { IAuthenticationService } from '../../auth/services/AuthenticationService';
+import { IAuthenticationService, AuthType } from '../../auth/services/AuthenticationService';
 
 // Repositories & UoW
 import { IUserRepository } from './../repositories/UserRepository';
@@ -112,7 +112,7 @@ export default class UserService implements IUserService {
             if (!isAuthorized)
                 return Promise.reject(AuthorizationErrors.AuthorizationError.create('Users'));
 
-            const token = this.authService.generateAuthToken({ id: user.id }, { expiresIn: '15 minutes' });
+            const token = this.authService.generateAuthToken({ id: user.id }, AuthType.LOGIN);
 
             return { token };
         } catch (e) {

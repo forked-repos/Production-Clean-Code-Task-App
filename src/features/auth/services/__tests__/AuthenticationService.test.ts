@@ -1,7 +1,7 @@
-import { mock, when, instance, reset, anything } from 'ts-mockito';
+import { mock, when, instance, reset, anything, deepEqual } from 'ts-mockito';
 
 // SUT
-import AuthenticationService, { IAuthenticationService, ITokenPayload } from '../AuthenticationService';
+import AuthenticationService, { IAuthenticationService, ITokenPayload, AuthType } from '../AuthenticationService';
 
 import { IHashHandler } from '../../../../common/operations/hashing/adapters/BcryptAdapter';
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../../common/operations/tokens/adapters/JwtAdapter';
@@ -95,16 +95,16 @@ describe('AuthenticationService', () => {
     });
 
     describe('generateAuthToken', () => {
-        test('should generate an authentication token with opts specified', () => {
+        test('should generate an authentication token for a user login', () => {
             // Arrange
             const payload: ITokenPayload = { id: 'user-id' };
-            const opts: ITokenEncodingOptions = { expiresIn: '1 hour' };
+            const opts: ITokenEncodingOptions = { expiresIn: '15 minutes' };
             const expectedToken = 'token';
 
-            when(tokenHandlerMock.generateToken(payload, anything(), opts)).thenReturn(expectedToken);
+            when(tokenHandlerMock.generateToken(payload, anything(), deepEqual(opts))).thenReturn(expectedToken);
 
             // Act
-            const token = authenticationService.generateAuthToken(payload, opts);
+            const token = authenticationService.generateAuthToken(payload, AuthType.LOGIN);
 
             // Assert
             expect(token).toEqual(expectedToken);

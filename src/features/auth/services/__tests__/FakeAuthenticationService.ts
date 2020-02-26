@@ -1,4 +1,4 @@
-import { IAuthenticationService } from "../AuthenticationService";
+import { IAuthenticationService, AuthType } from "../AuthenticationService";
 
 import { ITokenPayload } from './../AuthenticationService';
 import { ITokenEncodingOptions, ITokenDecodingOptions } from './../../../../common/operations/tokens/adapters/JwtAdapter';
@@ -30,8 +30,8 @@ export class FakeAuthenticationService implements IAuthenticationService, IFakeA
         return Promise.resolve(candidate === hash);
     }
 
-    generateAuthToken(payload: ITokenPayload, opts?: ITokenEncodingOptions): string {
-       return this.realAuthService.generateAuthToken(payload, opts);
+    generateAuthToken(payload: ITokenPayload, authType?: AuthType): string {
+       return this.realAuthService.generateAuthToken(payload, authType);
     }
 
     verifyAndDecodeAuthToken(

@@ -93,7 +93,7 @@ describe('signUpUser', () => {
         expect(authService.didHash(dto.password)).toBe(true);
         expect(user).toEqual({
             ...dto,
-            id: 'create-an-id', // Implement Hi-Lo Algorithm for this.
+            id: 'id', // Implement Hi-Lo Algorithm for this.
             password: authService.hash
         });
     });
