@@ -8,16 +8,17 @@ import CreateUserDTO from './../dtos/ingress/createUserDTO';
 import UserCredentialsDTO from './../dtos/ingress/userCredentialsDTO';
 import LoggedInUserResponseDTO from './../dtos/egress/loggedInUserResponseDTO';
 import UpdateUserDTO from './../dtos/ingress/updateUserDTO';
+import { stripBearerToken } from './../../../common/middleware/auth/stripBearerToken';
+import { verifyAuthProvider } from './../../../common/middleware/auth/verifyAuthToken';
+import { AuthorizationErrors } from '../../auth/errors/errors';
 
 
 @route('/api/v1/users')
 export default class UserController {
     public constructor(
         private readonly userService: IUserService,
-        private httpHandler: IExpressHttpResponseHandler
-    ) {
-        console.log('loaded')
-    }
+        private readonly httpHandler: IExpressHttpResponseHandler
+    ) { }
 
     @POST()
     async createUser(request: Request, res: Response): Promise<Response> {
@@ -32,12 +33,14 @@ export default class UserController {
         return this.httpHandler.withDTO(dto);
     }
 
-    @PATCH()
-    @route('/:id')
-    async updateUser(request: Request): Promise<Response> {
-        const targetId = request.params.id;
-        await this.userService.updateUserById(targetId, request.body as UpdateUserDTO);
-        return this.httpHandler.ok();
+    @GET()
+    @route('/me')
+    @before([stripBearerToken, inject(verifyAuthProvider)])
+    async getMeById(request: Request): Promise<Response> {
+        return this.performOnlyIfUserExists(request, async () => {
+            const user = await this.userService.findUserById(request.user!.id);
+            return this.httpHandler.withDTO(user);
+        });
     }
 
     @GET()
@@ -47,10 +50,30 @@ export default class UserController {
         return this.httpHandler.withDTO(user);
     }
 
+    @PATCH()
+    @route('/me')
+    @before([stripBearerToken, inject(verifyAuthProvider)])
+    async updateUser(request: Request): Promise<Response> {
+        return this.performOnlyIfUserExists(request, async () => {
+            await this.userService.updateUserById(request.user!.id, request.body as UpdateUserDTO);
+            return this.httpHandler.ok();
+        });
+    }
+
     @DELETE()
-    @route('/:id')
+    @route('/me')
+    @before([stripBearerToken, inject(verifyAuthProvider)])
     async deleteUserById(request: Request): Promise<Response> {
-        await this.userService.deleteUserById(request.params.id);
-        return this.httpHandler.ok();
+        return this.performOnlyIfUserExists(request, async () => {
+            await this.userService.deleteUserById(request.user!.id);
+            return this.httpHandler.ok();
+        });
+    }
+
+    private async performOnlyIfUserExists(request: Request, operation: (request?: Request) => Promise<Response>): Promise<Response> {
+        if (!request.user) 
+            return this.httpHandler.fromError(AuthorizationErrors.AuthorizationError.create('Users'));
+        else
+            return operation(request);
     }
 }

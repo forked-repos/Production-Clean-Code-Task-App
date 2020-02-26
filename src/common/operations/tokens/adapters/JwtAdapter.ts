@@ -46,7 +46,7 @@ export default class JwtAdapter implements ITokenHandler {
             if (e instanceof TokenExpiredError) 
                 throw TokenErrors.TokenExpiredError.create(e.expiredAt, e.message);
             else 
-                throw TokenErrors.CouldNotDecodeTokenError.create(e.message);
+                throw TokenErrors.InvalidTokenError.create(e.message);
         }
     }
 }

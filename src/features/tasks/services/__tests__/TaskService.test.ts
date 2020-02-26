@@ -63,7 +63,7 @@ describe('createNewTask', () => {
 
         // Assert
         const task = await taskRepository.findTaskByName(dto.name);
-        expect(task).toEqual({ id: 'create-an-id', ...dto });
+        expect(task).toEqual({ id: 'id', ...dto });
     });
 
     test('should reject with a ValidationError if a task fails validation', async () => {

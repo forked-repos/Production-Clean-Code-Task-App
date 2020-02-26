@@ -168,6 +168,7 @@ export default class UserService implements IUserService {
             await unitOfWork.commit();
         } catch (e) {
             await unitOfWork.rollback();
+            return Promise.reject(ApplicationErrors.UnexpectedError.create('Users'));
         } 
 
         this.userEventBus.dispatch(UserEventingChannel.USER_DELETED_ACCOUNT, {

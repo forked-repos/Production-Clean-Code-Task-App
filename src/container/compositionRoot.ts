@@ -27,6 +27,7 @@ import ExpressHttpResponseHandler from './../common/http/express/ExpressHttpResp
 
 // Misc
 import UserDomainPersistenceMapper from './../features/users/mappers/domain-dal/mapper';
+import TaskDomainPersistenceMapper from './../features/tasks/mappers/domain-dal/mapper';
 
 import { validate } from './../utils/wrappers/joi/joiWrapper';
 
@@ -65,6 +66,7 @@ export const configureContainer = (): AwilixContainer => {
     // Register Mappers
     container.register({
         userDomainPersistenceMapper: asFunction(UserDomainPersistenceMapper),
+        taskDomainPersistenceMapper: asFunction(TaskDomainPersistenceMapper)
     });
 
     // Register Adapters

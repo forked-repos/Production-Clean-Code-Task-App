@@ -3,7 +3,7 @@ import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../
 
 import { TokenErrors } from './../../../common/operations/tokens/errors/errors';
 import { AuthorizationErrors } from '../errors/errors';
-import { ApplicationErrors } from '../../../common/errors/errors';
+import { ApplicationErrors, CommonErrors } from '../../../common/errors/errors';
 
 import { Either, right, left } from '../../../utils/logic/Either';
 
@@ -82,9 +82,10 @@ export default class AuthenticationService implements IAuthenticationService {
         try {
             return right(this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts) as ITokenPayload);
         } catch (e) {
+            console.log(e)
             switch (true) {
-                case e instanceof TokenErrors.CouldNotDecodeTokenError:
-                    throw ApplicationErrors.UnexpectedError.create();
+                case e instanceof TokenErrors.InvalidTokenError:
+                    throw CommonErrors.ValidationError.create('Authentication');
                 case e instanceof TokenErrors.TokenExpiredError:
                     return left(AuthorizationErrors.AuthorizationError.create());
                 default:
