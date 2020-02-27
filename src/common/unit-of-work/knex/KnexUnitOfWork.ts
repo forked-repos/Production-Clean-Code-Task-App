@@ -35,4 +35,15 @@ export class KnexUnitOfWorkFactory implements IUnitOfWorkFactory {
         const trxContext = await this.knexInstance.transaction();
         return new KnexUnitOfWork(trxContext);
     }
+
+    public async createUnderScope<T>(operation: (unitOfWork: IUnitOfWork) => Promise<T>): Promise<T> {
+        const unitOfWork = await this.create();
+
+        try {
+            return await operation(unitOfWork);
+        } catch (e) {
+            await unitOfWork.rollback();
+            throw e;
+        }
+    }
 }

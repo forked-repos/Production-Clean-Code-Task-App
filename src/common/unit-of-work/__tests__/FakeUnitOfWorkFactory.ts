@@ -23,4 +23,14 @@ export class FakeUnitOfWorkFactory implements IUnitOfWorkFactory, IFakeUnitOfWor
             }
         }
     }
+
+    public async createUnderScope<T>(operation: (unitOfWork: IUnitOfWork) => Promise<T>): Promise<T> {
+        const unitOfWork = await this.create();
+        try {
+            return await operation(unitOfWork);
+        } catch (e) {
+            unitOfWork.rollback();
+            throw e;
+        }
+    }
 }

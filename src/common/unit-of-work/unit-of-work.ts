@@ -16,6 +16,8 @@ export interface IUnitOfWork {
 export interface IUnitOfWorkFactory {
     /** Creates a new Unit of Work. */
     create(): Promise<IUnitOfWork>;
+
+    createUnderScope<T>(operation: (unitOfWork: IUnitOfWork) => Promise<T>): Promise<T>;
 }
 
 /**

@@ -90,7 +90,7 @@ export default class UserService implements IUserService {
         const userID = this.userRepository.nextIdentity();
         const user: User = userFactory({ ...userDTO, password: hash }, userID);
 
-        await usingUnitOfWork(this.unitOfWorkFactory, async unitOfWork => {
+        await this.unitOfWorkFactory.createUnderScope(async unitOfWork => {
             const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
             const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
