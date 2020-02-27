@@ -35,7 +35,6 @@ import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import { IOutboxRepository } from './../../../common/repositories/outbox/OutboxRepository';
-import { usingUnitOfWork } from './../../../common/unit-of-work/usingUnitOfWork';
 import { outboxFactory } from '../../../common/outbox/outbox';
 
 export interface IUserService {
