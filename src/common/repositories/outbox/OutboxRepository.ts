@@ -14,14 +14,19 @@ export interface IOutboxRepository extends IRepository<OutboxMessage>, IUnitOfWo
 export default class OutboxRepository extends BaseKnexRepository implements IOutboxRepository {
     private outboxMessages: OutboxMessage[] = [];
 
+    private readonly dbContext: Knex | Knex.Transaction;
+
     public constructor (
-        private readonly knexInstance: Knex | Knex.Transaction
+        knexInstance: Knex | Knex.Transaction
     ) {
         super();
+        this.dbContext = knexInstance;
     }
     
     public async addOutboxMessage(outboxMessage: OutboxMessage): Promise<void> {
-        this.outboxMessages.push(outboxMessage);
+        return this.handleErrors(async () => {
+            await this.dbContext<OutboxMessage>('outbox').insert(outboxMessage);
+        });
     }
 
     public forUnitOfWork(unitOfWork: IUnitOfWork): this {

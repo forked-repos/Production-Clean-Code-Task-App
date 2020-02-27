@@ -33,6 +33,7 @@ import { validate } from './../utils/wrappers/joi/joiWrapper';
 
 import { PushProcessAvatarJob, PushWelcomeEmailJob } from '../features/users/pub-sub/handlers/userSignedUpHandlers';
 import BullTaskQueueService from "../common/operations/queueing/services/BullTaskQueueService";
+import OutboxRepository from "../common/repositories/outbox/OutboxRepository";
 
 
 
@@ -53,7 +54,8 @@ export const configureContainer = (): AwilixContainer => {
     // Register Repositories
     container.register({
         userRepository: asClass(UserRepository, lifetimeScoped).singleton(),
-        taskRepository: asClass(TaskRepository).singleton()
+        taskRepository: asClass(TaskRepository).singleton(),
+        outboxRepository: asClass(OutboxRepository).singleton()
     });
 
     // Register Event Handlers

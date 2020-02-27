@@ -1,7 +1,7 @@
 import * as uuid from 'uuid';
 
 export default interface OutboxMessage {
-    id: string;
+    outbox_id: string;
 
     /**
      * The domain upon which events are dispatched.
@@ -16,7 +16,7 @@ export default interface OutboxMessage {
 
 export const outboxFactory = (domain: string, payload: any, id?: string): OutboxMessage => {
     return {
-        id: id ? id : uuid.v4(),
+        outbox_id: id ? id : uuid.v4(),
         domain,
         payload: JSON.stringify(payload)
     }
