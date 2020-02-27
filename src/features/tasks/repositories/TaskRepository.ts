@@ -14,10 +14,12 @@ import { KnexUnitOfWork } from '../../../common/unit-of-work/knex/KnexUnitOfWork
 
 export interface ITaskRepository extends IRepository<Task>, IUnitOfWorkCapable {
     addTask(task: Task): Promise<void>;
-    updateTask(task: Task): Promise<void>;
     findTaskById(id: string): Promise<Task>;
-    removeTaskById(id: string): Promise<void>;
+    findTasksByOwnerId(id: string): Promise<Task[]>;
+    findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task>;
     removeTasksByOwnerId(id: string): Promise<void>;
+    removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void>;
+    updateTaskByOwnerId(ownerId: string, task: Task): Promise<void>;
 }
 
 export default class TaskRepository extends BaseKnexRepository implements ITaskRepository {
@@ -56,7 +58,7 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
         });
     }
 
-    public async updateTask(task: Task): Promise<void> {
+    public async updateTaskByOwnerId(ownerId: string, task: Task): Promise<void> {
         return this.handleErrors(async () => {
             const dalUpdatedTask = this.mapper.toPersistence(task);
             const doesTaskExist = await this.existsById(dalUpdatedTask.task_id);
@@ -66,14 +68,21 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
 
             await this.dbContext<TaskDalEntity>('tasks')
                 .select('*')
-                .where({ task_id: dalUpdatedTask.task_id })
+                .where({ 
+                    task_id: dalUpdatedTask.task_id,
+                    owner: ownerId
+                })
                 .update(dalUpdatedTask);
         });
     }
 
-    public async removeTaskById(id: string): Promise<void> {
+    public async removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
         return this.handleErrors(async () => { 
-            await this.dbContext<TaskDalEntity>('tasks').where({ task_id: id }).del(); 
+            await this.dbContext<TaskDalEntity>('tasks').where({ 
+                task_id: taskId,
+                owner: ownerId
+            })
+            .del(); 
         });
     }
 
@@ -102,6 +111,33 @@ export default class TaskRepository extends BaseKnexRepository implements ITaskR
                 .where({ task_id: id })
                 .first();
         });
+    }
+
+    public async findTasksByOwnerId(ownerId: string): Promise<Task[]> {
+        return this.handleErrors(async (): Promise<Task[]> => {
+            const dalTasks = await this.dbContext<TaskDalEntity>('tasks')
+                .select()
+                .where({ owner: ownerId });
+
+            return dalTasks.map(dalTask => this.mapper.toDomain(dalTask));
+        });
+    }
+
+    public async findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
+        return this.handleErrors(async (): Promise<Task> => {
+            const dalTask = await this.dbContext<TaskDalEntity>('tasks')
+                .select()
+                .where({
+                    owner: ownerId,
+                    task_id: taskId
+                })
+                .first();
+
+            if (!dalTask)
+                return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
+            return this.mapper.toDomain(dalTask);
+        })
     }
 
     public nextIdentity(): string {

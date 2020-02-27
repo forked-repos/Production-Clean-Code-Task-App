@@ -78,56 +78,56 @@ describe('createNewTask', () => {
 });
 
 describe('editTask', () => {
-    test('should correctly persist an edited task', async () => {
-        // Arrange
-        const id = 'id';
-        const existingTask = taskBuilder({ id });
-        const dto: UpdateTaskDTO = { name: 'This is a name.' };
+    // test('should correctly persist an edited task', async () => {
+    //     // Arrange
+    //     const id = 'id';
+    //     const existingTask = taskBuilder({ id });
+    //     const dto: UpdateTaskDTO = { name: 'This is a name.' };
 
-        await taskRepository.addTask(existingTask);
+    //     await taskRepository.addTask(existingTask);
 
-        // Act
-        await taskService.editTask(id, dto);
+    //     // Act
+    //     await taskService.editTask(id, dto);
 
-        // Assert
-        const updatedTask = await taskRepository.findTaskById(id);
-        expect(updatedTask).toEqual({
-            ...existingTask,
-            ...dto
-        });
-    });
+    //     // Assert
+    //     const updatedTask = await taskRepository.findTaskById(id);
+    //     expect(updatedTask).toEqual({
+    //         ...existingTask,
+    //         ...dto
+    //     });
+    // });
 
-    test('should reject with a ValidationError if a new task fails validation', async () => {
-        // Arrange
-        const existingTask = taskBuilder();
-        const dto: UpdateTaskDTO = { name: '' };
+    // test('should reject with a ValidationError if a new task fails validation', async () => {
+    //     // Arrange
+    //     const existingTask = taskBuilder();
+    //     const dto: UpdateTaskDTO = { name: '' };
 
-        await taskRepository.addTask(existingTask);
+    //     await taskRepository.addTask(existingTask);
 
-        // Act, Assert
-        await expect(taskService.editTask(existingTask.id, dto))
-            .rejects
-            .toEqual(CommonErrors.ValidationError.create('Tasks', '"name" is not allowed to be empty'));
+    //     // Act, Assert
+    //     await expect(taskService.editTask(existingTask.id, dto))
+    //         .rejects
+    //         .toEqual(CommonErrors.ValidationError.create('Tasks', '"name" is not allowed to be empty'));
 
-        const task = await taskRepository.findTaskById(existingTask.id);
-        expect(task).toEqual(existingTask);
-    });
+    //     const task = await taskRepository.findTaskById(existingTask.id);
+    //     expect(task).toEqual(existingTask);
+    // });
 });
 
 describe('deleteTask', () => {
-    test('should correctly remove a task from persistence', async () => {
-        // Arrange
-        const id = 'id';
-        const existingTask = taskBuilder({ id });
+    // test('should correctly remove a task from persistence', async () => {
+    //     // Arrange
+    //     const id = 'id';
+    //     const existingTask = taskBuilder({ id });
 
-        await taskRepository.addTask(existingTask);
-        const currentNumberOfTasks = taskRepository.tasks.length;
+    //     await taskRepository.addTask(existingTask);
+    //     const currentNumberOfTasks = taskRepository.tasks.length;
 
-        // Act
-        await taskService.deleteTaskById(id);
+    //     // Act
+    //     await taskService.deleteTaskById(id);
 
-        // Assert
-        expect(taskRepository.tasks.length).toBe(currentNumberOfTasks - 1);
-        expect(taskRepository.tasks.indexOf(existingTask)).toBe(-1);
-    });
+    //     // Assert
+    //     expect(taskRepository.tasks.length).toBe(currentNumberOfTasks - 1);
+    //     expect(taskRepository.tasks.indexOf(existingTask)).toBe(-1);
+    // });
 });

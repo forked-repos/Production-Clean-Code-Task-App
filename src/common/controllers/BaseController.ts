@@ -34,7 +34,7 @@ export default class BaseController {
         onPredicateFalse: (...args: any[]) => any,
         onPredicateTrue: (...args: any[]) => any
     ): Promise<any> {
-        if (await predicate()) {
+        if (!await predicate()) {
             return onPredicateFalse();
         } else {
             return onPredicateTrue();

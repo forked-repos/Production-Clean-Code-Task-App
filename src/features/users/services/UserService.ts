@@ -150,7 +150,7 @@ export default class UserService implements IUserService {
 
         const user = await this.userRepository.findUserById(id);
 
-        const updatedUser: User = { ...user, ...updateUserDTO, password: user.password };
+        const updatedUser: User = userFactory({ ...user, ...updateUserDTO, password: user.password }, user.id);
 
         await this.userRepository.updateUser(updatedUser);
     }

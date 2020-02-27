@@ -32,5 +32,5 @@ const taskCommonFields: { [key: string]: Joi.AnySchema } = {
 export namespace TaskValidators {
     export const createTask = Joi.object().keys(taskCommonFields);
 
-    export const updateUser = Joi.object(joiGenericMapper(taskCommonFields, currSchema => currSchema.optional()));
+    export const updateTask = Joi.object(joiGenericMapper(taskCommonFields, currSchema => currSchema.optional()));
 }

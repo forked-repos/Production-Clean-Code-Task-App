@@ -3,12 +3,7 @@ import { User } from './../../models/domain/userDomain';
 import UserResponseDTO from './../../dtos/egress/userResponseDTO';
 import UserCollectionResponseDTO from './../../dtos/egress/userCollectionResponseDTO';
 
-export interface IDomainEgressDTOMapper {
-    toUserResponseDTO(user: User): UserResponseDTO;
-    toUserCollectionResponseDTO(users: User[]): UserCollectionResponseDTO;
-}
-
-export const mappers: IDomainEgressDTOMapper = {
+export const mappers = {
     toUserResponseDTO: (user: User): UserResponseDTO => ({
         user: {
             id: user.id,

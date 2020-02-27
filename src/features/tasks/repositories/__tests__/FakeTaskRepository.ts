@@ -5,6 +5,18 @@ import { FakeBaseRepository } from './../../../../common/repositories/__tests__/
 import { CommonErrors } from '../../../../common/errors/errors';
 
 export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepository {
+    findTasksByOwnerId(id: string): Promise<Task[]> {
+        throw new Error("Method not implemented.");
+    }
+    findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
+        throw new Error("Method not implemented.");
+    }
+    removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    updateTaskByOwnerId(ownerId: string, task: Task): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
     public tasks: Task[] = [];
     
     public async addTask(task: Task): Promise<void> {
