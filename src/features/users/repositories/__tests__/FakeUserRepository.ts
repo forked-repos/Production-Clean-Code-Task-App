@@ -90,6 +90,6 @@ export class FakeUserRepository extends FakeBaseRepository implements IUserRepos
     }
     
     forUnitOfWork(unitOfWork: IUnitOfWork): this {
-        return new FakeUserRepository() as this;
+        return this;
     }   
 }

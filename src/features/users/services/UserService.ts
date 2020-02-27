@@ -4,7 +4,7 @@ import { IAuthenticationService, AuthType } from '../../auth/services/Authentica
 // Repositories & UoW
 import { IUserRepository } from './../repositories/UserRepository';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
-import { IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
+import { IUnitOfWorkFactory, IUnitOfWork } from '../../../common/unit-of-work/unit-of-work';
 
 // DTOs - Ingress
 import CreateUserDTO from './../dtos/ingress/createUserDTO';
@@ -34,6 +34,9 @@ import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
 // Validation
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
+import { IOutboxRepository } from './../../../common/repositories/outbox/OutboxRepository';
+import { usingUnitOfWork } from './../../../common/unit-of-work/usingUnitOfWork';
+import { outboxFactory } from '../../../common/outbox/outbox';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -50,6 +53,7 @@ export default class UserService implements IUserService {
         // Data Access
         private readonly userRepository: IUserRepository,
         private readonly taskRepository: ITaskRepository,
+        private readonly outboxRepository: IOutboxRepository,
         private readonly unitOfWorkFactory: IUnitOfWorkFactory,
 
         // Business 
@@ -86,14 +90,23 @@ export default class UserService implements IUserService {
         const userID = this.userRepository.nextIdentity();
         const user: User = userFactory({ ...userDTO, password: hash }, userID);
 
-        await this.userRepository.addUser(user);
+        await usingUnitOfWork(this.unitOfWorkFactory, async unitOfWork => {
+            const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
+            const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
-        // This will be going through the Outbox Pattern later, which will dispatch to the bus with CDC.
-        this.userEventBus.dispatch(UserEventingChannel.USER_SIGNED_UP, {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email
+            await boundUserRepository.addUser(user);
+            await boundOutboxRepository.addOutboxMessage(outboxFactory(
+                'users',
+                {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email
+                },
+                this.outboxRepository.nextIdentity()
+            ));
+
+            await unitOfWork.commit();
         });
     }
 

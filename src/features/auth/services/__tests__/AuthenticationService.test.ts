@@ -5,7 +5,7 @@ import AuthenticationService, { IAuthenticationService, ITokenPayload, AuthType 
 
 import { IHashHandler } from '../../../../common/operations/hashing/adapters/BcryptAdapter';
 import { ITokenHandler, ITokenEncodingOptions, ITokenDecodingOptions } from '../../../../common/operations/tokens/adapters/JwtAdapter';
-import { ApplicationErrors } from '../../../../common/errors/errors';
+import { ApplicationErrors, CommonErrors } from '../../../../common/errors/errors';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { TokenErrors } from '../../../../common/operations/tokens/errors/errors';
 import { AuthorizationErrors } from '../../errors/errors';
@@ -200,5 +200,15 @@ describe('AuthenticationService', () => {
             expect(() => authenticationService.verifyAndDecodeAuthToken(''))
                 .toThrow(ApplicationErrors.UnexpectedError.create())
         });
+
+        test('should throw a ValidationError if an InvalidTokenError was thrown', () => {
+            // Arrange
+            when(tokenHandlerMock.verifyAndDecodeToken(anything(), anything(), anything()))
+                .thenThrow(TokenErrors.InvalidTokenError.create());
+            
+            // Act, Assert
+            expect(() => authenticationService.verifyAndDecodeAuthToken(''))
+                .toThrow(CommonErrors.ValidationError.create())
+        })
     });
 });

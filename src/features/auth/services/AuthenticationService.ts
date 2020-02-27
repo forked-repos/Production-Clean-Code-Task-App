@@ -82,7 +82,6 @@ export default class AuthenticationService implements IAuthenticationService {
         try {
             return right(this.tokenHandler.verifyAndDecodeToken(candidateToken, 'my-secret', opts) as ITokenPayload);
         } catch (e) {
-            console.log(e)
             switch (true) {
                 case e instanceof TokenErrors.InvalidTokenError:
                     throw CommonErrors.ValidationError.create('Authentication');

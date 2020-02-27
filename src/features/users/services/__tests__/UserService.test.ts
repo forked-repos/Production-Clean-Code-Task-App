@@ -27,13 +27,16 @@ import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { IEventBus, createEventBus } from './../../../../common/buses/EventBus';
 import { UserEvents } from '../../pub-sub/events';
 import { IEventBusMaster, EventBusMaster } from './../../../../common/buses/MasterEventBus';
+import { FakeOutboxRepository } from './../../../../common/repositories/outbox/__tests__/FakeOutboxRepository';
+import { FakeUnitOfWorkFactory } from './../../../../common/unit-of-work/__tests__/FakeUnitOfWorkFactory';
 
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
-let unitOfWorkFactory: IUnitOfWorkFactory;
+let outboxRepository: FakeOutboxRepository;
+let unitOfWorkFactory: FakeUnitOfWorkFactory;
 let authService: FakeAuthenticationService;
 let dataValidator: FakeDataValidator;
-let masterEventBus;
+let masterEventBus: any;
 
 // SUT:
 let userService: UserService;
@@ -41,7 +44,8 @@ let userService: UserService;
 beforeEach(() => {
     userRepository = new FakeUserRepository();
     taskRepository = new FakeTaskRepository();
-    unitOfWorkFactory = mock<IUnitOfWorkFactory>();
+    outboxRepository = new FakeOutboxRepository();
+    unitOfWorkFactory = new FakeUnitOfWorkFactory();
     authService = new FakeAuthenticationService();
     dataValidator = new FakeDataValidator();
     masterEventBus = new EventBusMaster({ userEventBus: mock<IEventBus<UserEvents>>() });
@@ -49,7 +53,8 @@ beforeEach(() => {
     userService = new UserService(
         userRepository,
         taskRepository,
-        instance(unitOfWorkFactory),
+        outboxRepository,
+        unitOfWorkFactory,
         authService,
         dataValidator,
         masterEventBus
@@ -96,6 +101,39 @@ describe('signUpUser', () => {
             id: 'id', // Implement Hi-Lo Algorithm for this.
             password: authService.hash
         });
+    });
+
+    test('should dispatch the correct outbox message with the correct information', async () => {
+        // Arrange
+        const dto = createUserDTOBuilder();
+
+        // Act
+        await userService.signUpUser(dto);
+
+        // Assert
+        expect(outboxRepository.outboxMessages.length).toBe(1);
+        expect(outboxRepository.outboxMessages[0]).toEqual({
+            domain: 'users',
+            id: outboxRepository.nextIdentity(),
+            payload: JSON.stringify({
+                id: userRepository.nextIdentity(),
+                firstName: dto.firstName,
+                lastName: dto.lastName,
+                email: dto.email
+            })
+        });        
+    });
+
+    test('should commit the transaction', async () => {
+        // Arrange
+        const dto = createUserDTOBuilder();
+
+        // Act
+        await userService.signUpUser(dto);
+
+        // Assert
+        expect(unitOfWorkFactory.didCommit).toBe(true);
+
     });
 
     test('should reject with a UsernameTakenError if a provided username is in use', async () => {
