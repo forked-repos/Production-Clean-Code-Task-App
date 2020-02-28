@@ -10,5 +10,9 @@ module.exports = {
     "transform": {
         "^.+\\.(ts|tsx)$": "ts-jest"
     },
+    "coveragePathIgnorePatterns": [
+        "__tests__",
+        "node_modules"
+    ],
     preset: 'ts-jest'
 }

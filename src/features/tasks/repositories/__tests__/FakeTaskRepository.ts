@@ -21,17 +21,44 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
         );
     }
 
-    findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
-        throw new Error("Method not implemented.");
+    public async findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
+        return this.handleErrors(
+            async () => {
+                const task = this.tasks.filter(task => task.id === taskId && task.owner === ownerId)[0];
+
+                if (!task)
+                    return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
+                return task;
+            },
+            taskId
+        );
     }
 
-    removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async updateTaskByOwnerId(ownerId: string, updatedTask: Task): Promise<void> {
+        return this.handleErrors(
+            async () => {
+                const doesTaskExist = await this.existsById(updatedTask.id);
+
+                if (!doesTaskExist)
+                    return Promise.reject(CommonErrors.NotFoundError.create('Users'));
+        
+                const taskToUpdate = await this.findTaskById(updatedTask.id);
+                const taskToUpdateIndex = this.tasks.indexOf(taskToUpdate);
+        
+                this.tasks[taskToUpdateIndex] = updatedTask;
+            },
+            ownerId
+        )
     }
 
-    updateTaskByOwnerId(ownerId: string, task: Task): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
+        this.handleErrors(async () => {
+            this.tasks = this.tasks.filter(task => task.id !== taskId && task.owner !== ownerId)
+        }, taskId);
     }
+
+    
 
     public async findTaskById(id: string): Promise<Task> {
         return this.handleErrors(async () => {
@@ -79,24 +106,22 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
         );
     }
 
-     
-    
-    exists(t: Task): Promise<boolean> {
+    public exists(t: Task): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
     
-    async existsById(id: string): Promise<boolean> {
+    public async existsById(id: string): Promise<boolean> {
         return this.handleErrors(
             async () => !!this.tasks.filter(task => task.id === id)[0],
             id
         );
     }
 
-    nextIdentity(): string {
+    public nextIdentity(): string {
         return 'id';
     }
     
-    forUnitOfWork(unitOfWork: IUnitOfWork): this {
+    public forUnitOfWork(unitOfWork: IUnitOfWork): this {
         return this;
     }
 }

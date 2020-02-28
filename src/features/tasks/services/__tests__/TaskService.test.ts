@@ -1,69 +1,88 @@
+import { taskBuilder, createTaskDTOBuilder } from './fixtures/fixtures';
+import { userBuilder } from './../../../users/services/__tests__/fixtures/fixtures';
 import { Task, TaskPriority, TaskCompletionStatus } from "../../models/domain/taskDomain";
-import CreateTaskDTO from '../../dtos/ingress/createTaskDTO';
+
+// Repositories, UoW, Services, & Other Dependencies.
 import { FakeTaskRepository } from './../../repositories/__tests__/FakeTaskRepository';
-import { IUnitOfWorkFactory } from "../../../../common/unit-of-work/unit-of-work";
+import { FakeUserRepository } from './../../../users/repositories/__tests__/FakeUserRepository';
+import { FakeOutboxRepository } from './../../../../common/repositories/outbox/__tests__/FakeOutboxRepository';
+import { FakeUnitOfWorkFactory } from './../../../../common/unit-of-work/__tests__/FakeUnitOfWorkFactory';
 import { FakeDataValidator } from './../../../../utils/wrappers/joi/__tests__/FakeDataValidator';
-import TaskService from './../TaskService';
-import { mock, instance } from 'ts-mockito';
-import { CommonErrors } from "../../../../common/errors/errors";
+
+// DTOs
+import CreateTaskDTO from '../../dtos/ingress/createTaskDTO';
 import UpdateTaskDTO from './../../dtos/ingress/updateTaskDTO';
-import { EventBusMaster } from "../../../../common/buses/MasterEventBus";
-import { IEventBus } from "../../../../common/buses/EventBus";
-import { TaskEvents } from "../../observers/events";
+
+// Errors
+import { CommonErrors } from "../../../../common/errors/errors";
+
+// SUT:
+import TaskService from './../TaskService';
 
 let taskRepository: FakeTaskRepository;
-let unitOfWorkFactory: IUnitOfWorkFactory;
+let outboxRepository: FakeOutboxRepository;
+let unitOfWorkFactory: FakeUnitOfWorkFactory;
 let dataValidator: FakeDataValidator;
-let masterEventBus;
+
+let userRepository: FakeUserRepository;
 
 let taskService: TaskService;
 
 beforeEach(() => {
     taskRepository = new FakeTaskRepository();
-    unitOfWorkFactory = mock<IUnitOfWorkFactory>();
+    outboxRepository = new FakeOutboxRepository();
+    unitOfWorkFactory = new FakeUnitOfWorkFactory();
     dataValidator = new FakeDataValidator();
-    masterEventBus = new EventBusMaster({ taskEventBus: mock<IEventBus<TaskEvents>>() });
+
+    userRepository = new FakeUserRepository();
+
 
     taskService = new TaskService(
         taskRepository,
-        instance(unitOfWorkFactory),
+        outboxRepository,
+        unitOfWorkFactory,
         dataValidator,
-        masterEventBus
     );
 });
 
-const taskBuilder = (opts?: Partial<Task>): Task => ({
-    id: 'id',
-    name: 'Task One',
-    description: 'A desc.',
-    owner: 'owner-id',
-    dueDate: new Date().toISOString(),
-    priority: TaskPriority.NOT_IMPORTANT,
-    completionStatus: TaskCompletionStatus.PENDING,
-    ...opts
-});
-
-const createTaskDTOBuilder = (opts?: Partial<CreateTaskDTO>): CreateTaskDTO => ({
-    name: 'Task One',
-    description: 'A desc.',
-    owner: 'owner-id',
-    dueDate: new Date().toISOString(),
-    priority: 1,
-    completionStatus: 'PENDING',
-    ...opts
-});
-
 describe('createNewTask', () => {
-    test('should successfully persist a new task', async () => {
-        // Arrange
-        const dto = createTaskDTOBuilder();
+    describe('with correct daa', () => {
+        test('should successfully persist a new task', async () => {
+            // Arrange
+            const dto = createTaskDTOBuilder();
+    
+            // Act
+            await taskService.createNewTask(dto);
+    
+            // Assert
+            const task = await taskRepository.findTaskByName(dto.name);
+    
+            expect(task).toEqual({ id: taskRepository.nextIdentity(), ...dto });
+            expect(taskRepository.tasks.length).toBe(1);
 
-        // Act
-        await taskService.createNewTask(dto);
-
-        // Assert
-        const task = await taskRepository.findTaskByName(dto.name);
-        expect(task).toEqual({ id: 'id', ...dto });
+            expect(unitOfWorkFactory.didCommit).toBe(true);
+            expect(unitOfWorkFactory.didRollback).toBe(false);
+        });
+    
+        test('should dispatch the correct outbox messages to the outbox table', async () => {
+            // Arrange
+            const dto = createTaskDTOBuilder();
+    
+            // Act
+            await taskService.createNewTask(dto);
+    
+            // Assert
+            expect(outboxRepository.outboxMessages.length).toBe(1);
+            expect(outboxRepository.outboxMessages[0]).toEqual({
+                outbox_id: outboxRepository.nextIdentity(),
+                domain: 'tasks',
+                payload: JSON.stringify({
+                    id: taskRepository.nextIdentity(),
+                    name: dto.name,
+                    dueDate: dto.dueDate
+                })
+            });
+        });
     });
 
     test('should reject with a ValidationError if a task fails validation', async () => {
@@ -77,57 +96,165 @@ describe('createNewTask', () => {
     });
 });
 
-describe('editTask', () => {
-    // test('should correctly persist an edited task', async () => {
-    //     // Arrange
-    //     const id = 'id';
-    //     const existingTask = taskBuilder({ id });
-    //     const dto: UpdateTaskDTO = { name: 'This is a name.' };
+describe('findTasksByOwnerId', () => {
+    test('should return the correct array of tasks with the correct form', async () => {
+        // Arrange
+        const userOne = userBuilder({ id: 'user-one' });
+        const userTwo = userBuilder({ id: 'user-two' });
 
-    //     await taskRepository.addTask(existingTask);
+        const taskOne = taskBuilder({ id: 'task-one', owner: userOne.id });
+        const taskTwo = taskBuilder({ id: 'task-two' ,owner: userOne.id });
+        const taskThree = taskBuilder();
 
-    //     // Act
-    //     await taskService.editTask(id, dto);
+        await userRepository.addUser(userOne);
+        await userRepository.addUser(userTwo);
 
-    //     // Assert
-    //     const updatedTask = await taskRepository.findTaskById(id);
-    //     expect(updatedTask).toEqual({
-    //         ...existingTask,
-    //         ...dto
-    //     });
-    // });
+        await taskRepository.addTask(taskOne);
+        await taskRepository.addTask(taskTwo);
+        await taskRepository.addTask(taskThree);
 
-    // test('should reject with a ValidationError if a new task fails validation', async () => {
-    //     // Arrange
-    //     const existingTask = taskBuilder();
-    //     const dto: UpdateTaskDTO = { name: '' };
+        // Act
+        const tasks = await taskService.findTasksByOwnerId(userOne.id);
 
-    //     await taskRepository.addTask(existingTask);
+        // Assert
+        expect(tasks).toEqual({
+            tasks: [taskOne, taskTwo]
+        });
+    });
 
-    //     // Act, Assert
-    //     await expect(taskService.editTask(existingTask.id, dto))
-    //         .rejects
-    //         .toEqual(CommonErrors.ValidationError.create('Tasks', '"name" is not allowed to be empty'));
+    test('should return an empty array if no tasks exist', async () => {
+        // Act
+        const tasks = await taskService.findTasksByOwnerId(userBuilder().id);
 
-    //     const task = await taskRepository.findTaskById(existingTask.id);
-    //     expect(task).toEqual(existingTask);
-    // });
+        // Assert
+        expect(tasks).toEqual({ tasks: [] });
+    });
+});
+
+describe('findTaskByIdForOwner', () => {
+    test('should return the correct task if one exists', async () => {
+        // Arrange
+        const userOne = userBuilder({ id: 'user-one' });
+        const taskOne = taskBuilder({ owner: userOne.id });
+
+        await userRepository.addUser(userOne);
+        await taskRepository.addTask(taskOne);
+
+        // Act
+        const task = await taskService.findTaskByIdForOwner(taskOne.id, userOne.id);
+
+        // Assert
+        expect(task).toEqual({ task: taskOne })
+    });
+
+    test('should reject with a NotFoundError if no task exists', async () => {
+        // Act, Assert
+        await expect(taskService.findTaskByIdForOwner('any', 'any'))
+            .rejects
+            .toEqual(CommonErrors.NotFoundError.create('Users'));
+    });
+})
+
+
+
+describe('updateTaskByIdForOwner', () => {
+    test('should correctly update and persist a task', async () => {
+        // Arrange
+        const dto: UpdateTaskDTO = { completionStatus: TaskCompletionStatus.COMPLETE };
+
+        const existingUser = userBuilder({ id: 'user-one' });
+        const existingTask = taskBuilder({ owner: existingUser.id });
+
+        await userRepository.addUser(existingUser);
+        await taskRepository.addTask(existingTask);
+
+        // Act
+        await taskService.updateTaskByIdForOwner(existingTask.id, existingUser.id, dto);
+
+        // Assert
+        const updatedTask = await taskRepository.findTaskById(existingTask.id);
+
+        expect(updatedTask).toEqual({ ...existingTask, ...dto });
+        expect(taskRepository.tasks.length).toBe(1);
+        expect(taskRepository.tasks[0]).toEqual({ ...existingTask, ...dto });
+    });
+
+    test('should reject with a ValidationError for bad task data', async () => {
+        // Arrange
+        const dto: UpdateTaskDTO = { completionStatus: 'NON-EXISTENT' };
+
+        const existingUser = userBuilder({ id: 'user-one' });
+        const existingTask = taskBuilder({ owner: existingUser.id });
+
+        await userRepository.addUser(existingUser);
+        await taskRepository.addTask(existingTask);
+
+        // Act, Assert
+        await expect(taskService.updateTaskByIdForOwner(existingTask.id, existingUser.id, dto))
+            .rejects
+            .toEqual(CommonErrors.ValidationError.create('Tasks', '"completionStatus" must be one of [COMPLETE, PENDING]'));
+
+        const task = await taskRepository.findTaskById(existingTask.id);
+
+        expect(task).toEqual(existingTask);
+    });
+
+    test('should reject with a NotFoundError if no task exists', async () => {
+        // Arrange
+        const dto: UpdateTaskDTO = { completionStatus: TaskCompletionStatus.PENDING };
+
+        const existingUser = userBuilder({ id: 'user-one' });
+        const taskId = 'anything';
+
+        await userRepository.addUser(existingUser);
+
+        // Act, Assert
+        await expect(taskService.updateTaskByIdForOwner(taskId, existingUser.id, dto))
+            .rejects
+            .toEqual(CommonErrors.NotFoundError.create('Tasks'));
+
+        expect(taskRepository.tasks.length).toBe(0);
+    });
 });
 
 describe('deleteTask', () => {
-    // test('should correctly remove a task from persistence', async () => {
-    //     // Arrange
-    //     const id = 'id';
-    //     const existingTask = taskBuilder({ id });
+    test('should correctly remove a task from persistence', async () => {
+        // Arrange
+        const userOne = userBuilder({ id: 'user-one' });
+        const userTwo = userBuilder({ id: 'user-two' });
 
-    //     await taskRepository.addTask(existingTask);
-    //     const currentNumberOfTasks = taskRepository.tasks.length;
+        const taskOne = taskBuilder({ id: 'task-one', owner: userOne.id });
+        const taskTwo = taskBuilder({ id: 'task-two', owner: userTwo.id });
 
-    //     // Act
-    //     await taskService.deleteTaskById(id);
+        await userRepository.addUser(userOne);
+        await userRepository.addUser(userTwo);
 
-    //     // Assert
-    //     expect(taskRepository.tasks.length).toBe(currentNumberOfTasks - 1);
-    //     expect(taskRepository.tasks.indexOf(existingTask)).toBe(-1);
-    // });
+        await taskRepository.addTask(taskOne);
+        await taskRepository.addTask(taskTwo);
+
+        // Act
+        await taskService.deleteTaskByIdForOwner(taskOne.id, userOne.id);
+
+        // Assert
+        expect(taskRepository.tasks.length).toBe(1);
+        expect(taskRepository.tasks[0]).toEqual(taskTwo);
+    });
+
+    test('should reject with a NotFoundError if no task exists', async () => {
+        // Arrange
+        const userOne = userBuilder();
+        const taskOne = taskBuilder({ owner: 'not-user-one' });
+        
+        await userRepository.addUser(userOne);
+        await taskRepository.addTask(taskOne);
+
+        // Act, Assert
+        await expect(taskService.deleteTaskByIdForOwner(taskOne.id, userOne.id))
+            .rejects
+            .toEqual(CommonErrors.NotFoundError.create('Tasks'));
+
+        expect(taskRepository.tasks.length).toBe(1);
+        expect(taskRepository.tasks[0]).toEqual(taskOne);
+    });
+    
 });

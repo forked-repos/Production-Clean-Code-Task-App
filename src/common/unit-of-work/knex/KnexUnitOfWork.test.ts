@@ -53,5 +53,5 @@ describe('KnexUnitOfWorkFactory', () => {
             expect(knexUnitOfWork.trxContext).not.toBe(undefined);
             expect(knexUnitOfWork.trxContext).toEqual({});
         });
-    }); 
+    });     
 });

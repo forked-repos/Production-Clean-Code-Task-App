@@ -25,7 +25,7 @@ const taskCommonFields: { [key: string]: Joi.AnySchema } = {
         .required(),
 
     completionStatus: Joi.string()
-        .valid('COMPLETED', 'PENDING')
+        .valid('COMPLETE', 'PENDING')
         .required()
 };
 

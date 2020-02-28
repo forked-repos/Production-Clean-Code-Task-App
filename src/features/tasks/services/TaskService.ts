@@ -1,19 +1,30 @@
-
+// Repositories & UoW
 import { ITaskRepository } from './../repositories/TaskRepository';
+import { IOutboxRepository } from './../../../common/repositories/outbox/OutboxRepository';
 import { IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
-import { IDataValidator } from './../../../common/operations/validation/validation';
+
+// DTOs - Ingress
 import CreateTaskDTO from './../dtos/ingress/createTaskDTO';
-import { TaskValidators } from '../validation/taskValidation';
-import { CommonErrors } from '../../../common/errors/errors';
-import { Task, taskFactory } from './../models/domain/taskDomain';
 import UpdateTaskDTO from './../dtos/ingress/updateTaskDTO';
-import { IEventBus } from '../../../common/buses/EventBus';
-import { TaskEvents, TaskEventingChannel } from '../observers/events';
-import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
-import TaskCollectionResponseDTO from './../dtos/egress/taskCollectionResponseDTO';
-import { mappers } from './../../tasks/mappers/domain-egress-dto/mappers';
+
+// DTOs - Egress
 import TaskResponseDTO from './../dtos/egress/taskResponseDTO';
+import TaskCollectionResponseDTO from './../dtos/egress/taskCollectionResponseDTO';
+
+// Data
+import { mappers } from './../../tasks/mappers/domain-egress-dto/mappers';
+import { outboxFactory } from '../../../common/outbox/outbox';
+
+// Domain
+import { Task, taskFactory } from './../models/domain/taskDomain';
+
+// Errors
+import { CommonErrors } from '../../../common/errors/errors';
 import { AuthorizationErrors } from '../../auth/errors/errors';
+
+// Validation
+import { TaskValidators } from '../validation/taskValidation';
+import { IDataValidator } from './../../../common/operations/validation/validation';
 
 export interface ITaskService {
     createNewTask(createTaskDTO: CreateTaskDTO): Promise<void>;
@@ -24,16 +35,12 @@ export interface ITaskService {
 }
 
 export default class TaskService implements ITaskService  {
-    private readonly taskEventBus: IEventBus<TaskEvents>;
-
-    public constructor (
+     public constructor (
         private readonly taskRepository: ITaskRepository,
+        private readonly outboxRepository: IOutboxRepository,
         private readonly unitOfWorkFactory: IUnitOfWorkFactory,
         private readonly dataValidator: IDataValidator,
-        eventBusMaster: IEventBusMaster<{ taskEventBus: IEventBus<TaskEvents> }>
-    ) {
-        this.taskEventBus = eventBusMaster.getBus('taskEventBus');
-    }
+    ) {}
 
     public async createNewTask(createTaskDTO: CreateTaskDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(TaskValidators.createTask, createTaskDTO);
@@ -41,15 +48,24 @@ export default class TaskService implements ITaskService  {
         if (validationResult.isLeft()) 
             return Promise.reject(CommonErrors.ValidationError.create('Tasks', validationResult.value));
 
-        const taskId = this.taskRepository.nextIdentity();
-        const task: Task = taskFactory(createTaskDTO, taskId);
-        
-        await this.taskRepository.addTask(task);
+        const task: Task = taskFactory(createTaskDTO, this.taskRepository.nextIdentity());
 
-        this.taskEventBus.dispatch(TaskEventingChannel.TASK_CREATED, {
-            id: task.id,
-            name: task.name,
-            dueDate: task.dueDate
+        await this.unitOfWorkFactory.createUnderScope(async unitOfWork => {
+            const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
+            const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
+
+            await boundTaskRepository.addTask(task);
+            await boundOutboxRepository.addOutboxMessage(outboxFactory(
+                'tasks',
+                {
+                    id: task.id,
+                    name: task.name,
+                    dueDate: task.dueDate
+                },
+                this.outboxRepository.nextIdentity()
+            ));
+
+            await unitOfWork.commit();
         });
     }
 
@@ -73,18 +89,15 @@ export default class TaskService implements ITaskService  {
 
         const updatedTask = taskFactory({ ...task, ...updateTaskDTO }, task.id);
 
-        try {
-            await this.taskRepository.updateTaskByOwnerId(ownerId, updatedTask);
-        } catch (e) {
-            if (e instanceof CommonErrors.ValidationError) {
-                return Promise.reject(AuthorizationErrors.AuthorizationError.create('Tasks'));
-            } else {
-                return Promise.reject(e);
-            }
-        }
+        await this.taskRepository.updateTaskByOwnerId(ownerId, updatedTask);
     }
 
     public async deleteTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
+        const task = await this.taskRepository.findTaskByIdForOwner(taskId, ownerId);
+
+        if (!task)
+            return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
+
         await this.taskRepository.removeTaskByIdForOwner(taskId, ownerId);
     }
 }
