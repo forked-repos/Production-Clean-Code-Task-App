@@ -22,7 +22,7 @@ export interface Task {
     completionStatus: string;
 }
 
-export const taskFactory = (userProps: Omit<Task, 'id'>, id?: string): Task => ({
+export const taskFactory = (taskProps: Omit<Task, 'id'>, id?: string): Task => ({
     id: id ? id : uuid.v4(),
-    ...userProps
+    ...taskProps
 });
