@@ -25,6 +25,7 @@ import UserService from '../UserService';
 import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { FakeOutboxRepository } from './../../../../common/repositories/outbox/__tests__/FakeOutboxRepository';
 import { FakeUnitOfWorkFactory } from './../../../../common/unit-of-work/__tests__/FakeUnitOfWorkFactory';
+import { execSync } from 'child_process';
 
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
@@ -250,7 +251,11 @@ describe('updateUserById', () => {
             // Arrange
             const id = 'id';
             const existingUser = userBuilder({ id });
-            const updatesDto: UpdateUserDTO = { email: 'new@gmail.com', biography: 'A new bio.' };
+            const updatesDto: UpdateUserDTO = { 
+                email: 'new@gmail.com', 
+                biography: 'A new bio.', 
+                username: 'newName' 
+            };
     
             await userRepository.addUser(existingUser);
     
@@ -260,6 +265,24 @@ describe('updateUserById', () => {
             // Assert
             const updatedUser = await userRepository.findUserById(id);
             expect(updatedUser).toEqual({
+                ...existingUser,
+                ...updatesDto
+            });
+        });
+
+        test('should not check for email or username duplication if none are provided', async () => {
+            // Arrange
+            const existingUser = userBuilder();
+            const updatesDto: UpdateUserDTO = { biography: 'bio' };
+
+            await userRepository.addUser(existingUser);
+
+            // Act
+            await userService.updateUserById(existingUser.id, updatesDto);
+
+            // Assert
+            expect(userRepository.users.length).toBe(1);
+            expect(userRepository.users[0]).toEqual({
                 ...existingUser,
                 ...updatesDto
             });

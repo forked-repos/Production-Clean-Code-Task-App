@@ -146,7 +146,7 @@ export default class UserService implements IUserService {
             const isEmailTaken = await this.userRepository.existsByEmail(updateUserDTO.email);
             if (isEmailTaken) return Promise.reject(CreateUserErrors.EmailTakenError.create());
         }
-        
+
         if (updateUserDTO.username) {
             const isUsernameTaken = await this.userRepository.existsByUsername(updateUserDTO.username);
             if (isUsernameTaken) return Promise.reject(CreateUserErrors.UsernameTakenError.create());
