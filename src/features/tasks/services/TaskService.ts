@@ -95,9 +95,6 @@ export default class TaskService implements ITaskService  {
     public async deleteTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
         const task = await this.taskRepository.findTaskByIdForOwner(taskId, ownerId);
 
-        if (!task)
-            return Promise.reject(CommonErrors.NotFoundError.create('Tasks'));
-
         await this.taskRepository.removeTaskByIdForOwner(taskId, ownerId);
     }
 }
