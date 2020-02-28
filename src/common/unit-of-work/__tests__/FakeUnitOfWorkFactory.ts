@@ -14,11 +14,9 @@ export class FakeUnitOfWorkFactory implements IUnitOfWorkFactory, IFakeUnitOfWor
         return {
             commit: async (): Promise<void> => {
                 this.didCommit = true;
-                this.didRollback = false;
             }, 
 
             rollback: async (): Promise<void> => {
-                this.didCommit = false;
                 this.didRollback = true;
             }
         }

@@ -4,7 +4,7 @@ import { IAuthenticationService, AuthType } from '../../auth/services/Authentica
 // Repositories & UoW
 import { IUserRepository } from './../repositories/UserRepository';
 import { ITaskRepository } from './../../tasks/repositories/TaskRepository';
-import { IUnitOfWorkFactory, IUnitOfWork } from '../../../common/unit-of-work/unit-of-work';
+import { IUnitOfWorkFactory } from '../../../common/unit-of-work/unit-of-work';
 
 // DTOs - Ingress
 import CreateUserDTO from './../dtos/ingress/createUserDTO';
@@ -26,11 +26,6 @@ import { CommonErrors, ApplicationErrors } from '../../../common/errors/errors';
 import { AuthorizationErrors } from '../../auth/errors/errors';
 import { CreateUserErrors } from '../errors/errors';
 
-// Eventing & Communication
-import { IEventBus } from './../../../common/buses/EventBus';
-import { UserEvents, UserEventingChannel } from '../pub-sub/events';
-import { IEventBusMaster } from './../../../common/buses/MasterEventBus';
-
 // Validation
 import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
@@ -46,8 +41,6 @@ export interface IUserService {
 }
 
 export default class UserService implements IUserService {
-    private readonly userEventBus: IEventBus<UserEvents>;
-
     public constructor (
         // Data Access
         private readonly userRepository: IUserRepository,
@@ -60,12 +53,7 @@ export default class UserService implements IUserService {
 
         // Misc
         private readonly dataValidator: IDataValidator,
-
-        // Event Bus
-        eventBusMaster: IEventBusMaster<{ userEventBus: IEventBus<UserEvents> }>
-    ) {
-        this.userEventBus = eventBusMaster.getBus('userEventBus');
-    }
+    ) {}
 
     public async signUpUser(userDTO: CreateUserDTO): Promise<void> {
         const validationResult = this.dataValidator.validate(UserValidators.createUser, userDTO);
@@ -86,8 +74,10 @@ export default class UserService implements IUserService {
 
         const hash = await this.authService.hashPassword(userDTO.password);
 
-        const userID = this.userRepository.nextIdentity();
-        const user: User = userFactory({ ...userDTO, password: hash }, userID);
+        const user: User = userFactory({ 
+            ...userDTO, 
+            password: hash 
+        }, this.userRepository.nextIdentity());
 
         await this.unitOfWorkFactory.createUnderScope(async unitOfWork => {
             const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
@@ -123,7 +113,7 @@ export default class UserService implements IUserService {
             const isAuthorized = await this.authService.checkHashMatch(password, user.password);
 
             if (!isAuthorized)
-                return Promise.reject(AuthorizationErrors.AuthorizationError.create('Users'));
+                throw AuthorizationErrors.AuthorizationError.create('Users');
 
             const token = this.authService.generateAuthToken({ id: user.id }, AuthType.LOGIN);
 
@@ -150,6 +140,8 @@ export default class UserService implements IUserService {
         if (validateResult.isLeft())
             return Promise.reject(CommonErrors.ValidationError.create('Users', validateResult.value));
 
+        const user = await this.userRepository.findUserById(id);
+
         if (updateUserDTO.email) {
             const isEmailTaken = await this.userRepository.existsByEmail(updateUserDTO.email);
             if (isEmailTaken) return Promise.reject(CreateUserErrors.EmailTakenError.create());
@@ -160,34 +152,33 @@ export default class UserService implements IUserService {
             if (isUsernameTaken) return Promise.reject(CreateUserErrors.UsernameTakenError.create());
         }
 
-        const user = await this.userRepository.findUserById(id);
-
         const updatedUser: User = userFactory({ ...user, ...updateUserDTO, password: user.password }, user.id);
 
         await this.userRepository.updateUser(updatedUser);
     }
 
     public async deleteUserById(id: string): Promise<void> {
-        const unitOfWork = await this.unitOfWorkFactory.create();
-        const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
-        const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
+        return this.unitOfWorkFactory.createUnderScope(async unitOfWork => {
+            const boundUserRepository = this.userRepository.forUnitOfWork(unitOfWork);
+            const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
+            const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
-        const user = await this.userRepository.findUserById(id);
+            const user = await this.userRepository.findUserById(id);
 
-        try {
             await boundUserRepository.removeUserById(id);
-            await boundTaskRepository.removeTasksByOwnerId(id);
-            await unitOfWork.commit();
-        } catch (e) {
-            await unitOfWork.rollback();
-            return Promise.reject(ApplicationErrors.UnexpectedError.create('Users'));
-        } 
+            await boundTaskRepository.removeTasksByOwnerId(user.id);
+            await boundOutboxRepository.addOutboxMessage(outboxFactory(
+                'users',
+                {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email
+                },
+                this.outboxRepository.nextIdentity()
+            ));
 
-        this.userEventBus.dispatch(UserEventingChannel.USER_DELETED_ACCOUNT, {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email
+            await unitOfWork.commit();
         });
     }
 }

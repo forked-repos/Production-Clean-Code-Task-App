@@ -5,25 +5,32 @@ import { FakeBaseRepository } from './../../../../common/repositories/__tests__/
 import { CommonErrors } from '../../../../common/errors/errors';
 
 export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepository {
-    findTasksByOwnerId(id: string): Promise<Task[]> {
-        throw new Error("Method not implemented.");
-    }
-    findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
-        throw new Error("Method not implemented.");
-    }
-    removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    updateTaskByOwnerId(ownerId: string, task: Task): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
     public tasks: Task[] = [];
-    
+
     public async addTask(task: Task): Promise<void> {
         return this.handleErrors(
             async () => { this.tasks.push(task); },
             task.description
         );
+    }
+    
+    public async findTasksByOwnerId(id: string): Promise<Task[]> {
+        return this.handleErrors(
+            async () => this.tasks.filter(task => task.owner === id),
+            id
+        );
+    }
+
+    findTaskByIdForOwner(taskId: string, ownerId: string): Promise<Task> {
+        throw new Error("Method not implemented.");
+    }
+
+    removeTaskByIdForOwner(taskId: string, ownerId: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    updateTaskByOwnerId(ownerId: string, task: Task): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async findTaskById(id: string): Promise<Task> {
@@ -52,8 +59,18 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
     }
 
     public async removeTaskById(id: string): Promise<void> {
-        return this.handleErrors(async () => { this.tasks = this.tasks.filter(task => task.id !== id); });
+        return this.handleErrors(
+            async () => { this.tasks = this.tasks.filter(task => task.id !== id); },
+            id
+        );
     }
+
+    public async removeTasksByOwnerId(id: string): Promise<void> {
+        return this.handleErrors(
+            async () => { this.tasks = this.tasks.filter(task => task.owner !== id); },
+            id
+        );
+    }   
 
     public async findTaskByName(name: string): Promise<Task> {
         return this.handleErrors(
@@ -62,9 +79,7 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
         );
     }
 
-    removeTasksByOwnerId(id: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }    
+     
     
     exists(t: Task): Promise<boolean> {
         throw new Error("Method not implemented.");
@@ -82,6 +97,6 @@ export class FakeTaskRepository extends FakeBaseRepository implements ITaskRepos
     }
     
     forUnitOfWork(unitOfWork: IUnitOfWork): this {
-        throw new Error();
+        return this;
     }
 }

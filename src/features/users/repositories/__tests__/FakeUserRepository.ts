@@ -69,7 +69,7 @@ export class FakeUserRepository extends FakeBaseRepository implements IUserRepos
     
     async removeUserById(id: string): Promise<void> {
         return this.handleErrors(
-            async () => { this.users.filter(user => user.id !== id) },
+            async () => { this.users = this.users.filter(user => user.id !== id) },
             id
         );
     }
