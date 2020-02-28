@@ -54,4 +54,62 @@ describe('KnexUnitOfWorkFactory', () => {
             expect(knexUnitOfWork.trxContext).toEqual({});
         });
     });     
+
+    describe('createUnderScope', () => {
+        test('should call the callback and pass it the UoW', async () => {
+            // Arrange
+            const fakeKnex = FakeKnex();
+            const knexUoWFactory = new KnexUnitOfWorkFactory(fakeKnex);
+            const operationMock = jest.fn();
+
+            // Act
+            await knexUoWFactory.createUnderScope(operationMock);
+
+            // Assert
+            expect(operationMock).toHaveBeenCalledTimes(1);
+            expect(JSON.stringify(operationMock.mock.calls[0][0])).toEqual(JSON.stringify(new KnexUnitOfWork(await fakeKnex.transaction())));
+            expect(fakeKnex.didRollback).toBe(false);
+        });
+        
+        test('should rollback and throw if the callback errors out', async () => {
+            // Arrange
+            const fakeKnex = FakeKnex();
+            const knexUoWFactory = new KnexUnitOfWorkFactory(fakeKnex);
+            const operationMock = jest.fn().mockRejectedValue('rejection');
+
+            // Act, Assert
+            await expect(knexUoWFactory.createUnderScope(operationMock))
+                .rejects
+                .toEqual('rejection')
+
+            // Assert
+            expect(operationMock).toHaveBeenCalledTimes(1);
+            expect(fakeKnex.didRollback).toBe(true);
+        }); 
+    });
+    
 });
+
+interface IFakeKnex {
+    didCommit: boolean;
+    didRollback: boolean;
+}
+
+const FakeKnex = () => {
+    return {
+        didCommit: false,
+        didRollback: false,
+
+        async transaction() { 
+            return {
+                commit: () => {
+                    this.didCommit = true;
+                },
+
+                rollback: () => {
+                    this.didRollback = true;
+                }
+            }
+        }
+    } as IFakeKnex as Knex & IFakeKnex;
+}
