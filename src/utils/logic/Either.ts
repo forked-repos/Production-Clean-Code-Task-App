@@ -14,6 +14,10 @@ export class Left<L, A> {
     map<B>(_: (a: A) => B): Either<L, B> {
         return this as any;
     }
+
+    flatMap<B>(func: (wrapped: A) => Either<L, B>): Either<L, B> {
+        return this as any;
+    }
 }
 
 export class Right<L, A> {
