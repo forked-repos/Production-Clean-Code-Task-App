@@ -1,4 +1,5 @@
 import express from 'express';
+import cron from 'node-cron';
 
 import { AwilixContainer, asValue } from 'awilix';
 import { scopePerRequest, loadControllers } from 'awilix-express';
@@ -9,6 +10,7 @@ import { EventBuses } from './loaders/loadBuses';
 
 import { IEventBusEventHandler } from './loaders/loadDecorator';
 import { ClassHandlerOrObserver } from './common/buses/EventBus';
+import { messageRelayProvider } from './common/relay/messageRelay';
 
 export default (container: AwilixContainer): express.Application => {
     const app = express();

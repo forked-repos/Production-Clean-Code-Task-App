@@ -6,10 +6,10 @@ import Knex from 'knex';
 export default (): Knex => {
     return Knex({
         client: 'pg',
-        version: '11',
+        version: '12',
         connection: {
             host: '127.0.0.1',
-            port: 5433,
+            port: 5432,
             user: 'postgres',
             password: 'root', 
             database: 'task_management'

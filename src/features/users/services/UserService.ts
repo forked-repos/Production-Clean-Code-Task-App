@@ -31,6 +31,8 @@ import { UserValidators } from '../validation/userValidation';
 import { IDataValidator } from '../../../common/operations/validation/validation';
 import { IOutboxRepository } from './../../../common/repositories/outbox/OutboxRepository';
 import { outboxFactory } from '../../../common/outbox/outbox';
+import { OperationalDomain } from '../../../common/app/domains/operationalDomains';
+import { UserEventingChannel } from '../pub-sub/events';
 
 export interface IUserService {
     signUpUser(userDTO: CreateUserDTO): Promise<void>;
@@ -84,17 +86,17 @@ export default class UserService implements IUserService {
             const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
             await boundUserRepository.addUser(user);
-            await boundOutboxRepository.addOutboxMessage(outboxFactory(
-                'users',
-                {
+            await boundOutboxRepository.addOutboxMessage(outboxFactory({
+                operationalDomain: OperationalDomain.USERS,
+                operationalChannel: UserEventingChannel.USER_SIGNED_UP,
+                payload: {
                     id: user.id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email
-                },
-                this.outboxRepository.nextIdentity()
-            ));
-
+                }
+            }, this.outboxRepository.nextIdentity()));
+            
             await unitOfWork.commit();
         });
     }
@@ -167,16 +169,16 @@ export default class UserService implements IUserService {
 
             await boundUserRepository.removeUserById(id);
             await boundTaskRepository.removeTasksByOwnerId(user.id);
-            await boundOutboxRepository.addOutboxMessage(outboxFactory(
-                'users',
-                {
+            await boundOutboxRepository.addOutboxMessage(outboxFactory({
+                operationalDomain: OperationalDomain.USERS,
+                operationalChannel: UserEventingChannel.USER_DELETED_ACCOUNT,
+                payload: {
                     id: user.id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email
-                },
-                this.outboxRepository.nextIdentity()
-            ));
+                }
+            }, this.outboxRepository.nextIdentity()));
 
             await unitOfWork.commit();
         });

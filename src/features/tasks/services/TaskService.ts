@@ -25,6 +25,8 @@ import { AuthorizationErrors } from '../../auth/errors/errors';
 // Validation
 import { TaskValidators } from '../validation/taskValidation';
 import { IDataValidator } from './../../../common/operations/validation/validation';
+import { OperationalDomain } from '../../../common/app/domains/operationalDomains';
+import { TaskEventingChannel } from '../observers/events';
 
 export interface ITaskService {
     createNewTask(createTaskDTO: CreateTaskDTO): Promise<void>;
@@ -55,15 +57,15 @@ export default class TaskService implements ITaskService  {
             const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
             await boundTaskRepository.addTask(task);
-            await boundOutboxRepository.addOutboxMessage(outboxFactory(
-                'tasks',
-                {
+            await boundOutboxRepository.addOutboxMessage(outboxFactory({
+                operationalDomain: OperationalDomain.TASKS,
+                operationalChannel: TaskEventingChannel.TASK_CREATED,
+                payload: {
                     id: task.id,
                     name: task.name,
                     dueDate: task.dueDate
-                },
-                this.outboxRepository.nextIdentity()
-            ));
+                }
+            }, this.outboxRepository.nextIdentity()));            
 
             await unitOfWork.commit();
         });

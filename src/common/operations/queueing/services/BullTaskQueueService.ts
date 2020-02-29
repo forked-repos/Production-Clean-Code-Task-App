@@ -36,7 +36,7 @@ export default class BullTaskQueueService implements ITaskQueueService {
     }
 
     public async addAvatarProcessing(buffer: Buffer, username: string, retry: boolean = true): Promise<void> {
-        const execute = async (context?: AttemptContext) => await Queues.imageQueue.add({ buffer, username });
+        const execute = async (context?: AttemptContext) => await this.enqueueJob(Queues.imageQueue, { buffer, username });
         retry === true ? await backOff(execute, this.retryOptions) : await execute();
    
     }
