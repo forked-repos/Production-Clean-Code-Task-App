@@ -3,14 +3,12 @@ import * as Knex from 'knex';
 import { IEventBusMaster } from "../buses/MasterEventBus";
 import { IEventBus } from "../buses/EventBus";
 
-import { UserEvents, UserEventingChannel } from "../../features/users/pub-sub/events";
-import { TaskEvents, TaskEventingChannel } from "../../features/tasks/observers/events";
+import { UserEvents } from "../../features/users/pub-sub/events";
+import { TaskEvents } from "../../features/tasks/observers/events";
 
-import { IUnitOfWorkFactory } from "../unit-of-work/unit-of-work";
-import { IOutboxRepository } from './../repositories/outbox/OutboxRepository';
 import OutboxMessage from './../outbox/outbox';
 import { EventBuses } from './../../loaders/loadBuses';
-import { OperationalDomain, OperationalDomainType } from './../app/domains/operationalDomains';
+import { OperationalDomain } from './../app/domains/operationalDomains';
 
 const mapOperationalDomainToBusName = (domain: OperationalDomain) => {
     if (Object.keys(EventBuses.domainBusNameMap).indexOf(domain) > -1) {

@@ -18,6 +18,8 @@ import { CommonErrors } from "../../../../common/errors/errors";
 
 // SUT:
 import TaskService from './../TaskService';
+import { OperationalDomain } from '../../../../common/app/domains/operationalDomains';
+import { TaskEventingChannel } from '../../observers/events';
 
 let taskRepository: FakeTaskRepository;
 let outboxRepository: FakeOutboxRepository;
@@ -75,7 +77,9 @@ describe('createNewTask', () => {
             expect(outboxRepository.outboxMessages.length).toBe(1);
             expect(outboxRepository.outboxMessages[0]).toEqual({
                 outbox_id: outboxRepository.nextIdentity(),
-                domain: 'tasks',
+                operational_domain: OperationalDomain.TASKS,
+                operational_channel: TaskEventingChannel.TASK_CREATED,
+                processed_date: null,
                 payload: JSON.stringify({
                     id: taskRepository.nextIdentity(),
                     name: dto.name,

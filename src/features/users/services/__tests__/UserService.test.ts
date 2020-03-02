@@ -26,6 +26,8 @@ import UpdateUserDTO from './../../dtos/ingress/updateUserDTO';
 import { FakeOutboxRepository } from './../../../../common/repositories/outbox/__tests__/FakeOutboxRepository';
 import { FakeUnitOfWorkFactory } from './../../../../common/unit-of-work/__tests__/FakeUnitOfWorkFactory';
 import { execSync } from 'child_process';
+import { OperationalDomain } from '../../../../common/app/domains/operationalDomains';
+import { UserEventingChannel } from '../../pub-sub/events';
 
 let userRepository: FakeUserRepository;
 let taskRepository: FakeTaskRepository;
@@ -88,7 +90,9 @@ describe('signUpUser', () => {
             // Assert
             expect(outboxRepository.outboxMessages.length).toBe(1);
             expect(outboxRepository.outboxMessages[0]).toEqual({
-                domain: 'users',
+                operational_domain: OperationalDomain.USERS,
+                operational_channel: UserEventingChannel.USER_SIGNED_UP,
+                processed_date: null,
                 outbox_id: outboxRepository.nextIdentity(),
                 payload: JSON.stringify({
                     id: userRepository.nextIdentity(),
@@ -442,7 +446,9 @@ describe('deleteUserById', () => {
         expect(outboxRepository.outboxMessages.length).toBe(1);
         expect(outboxRepository.outboxMessages[0]).toEqual({
             outbox_id: outboxRepository.nextIdentity(),
-            domain: 'users',
+            operational_domain: OperationalDomain.USERS,
+            operational_channel: UserEventingChannel.USER_DELETED_ACCOUNT,
+            processed_date: null,
             payload: JSON.stringify({
                 id: userOne.id,
                 firstName: userOne.firstName,
