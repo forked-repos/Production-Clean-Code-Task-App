@@ -62,7 +62,7 @@ export default class AuthenticationService implements IAuthenticationService {
 
         switch(authType) {
             case AuthType.LOGIN:
-                opts = { expiresIn: '15 minutes' };
+                opts = { expiresIn: '2 weeks' };
                 break;
             default:
                 opts = undefined;

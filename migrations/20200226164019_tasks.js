@@ -6,7 +6,7 @@ exports.up = async function(knex) {
             table.string('name', 100).notNullable();
             table.string('description', 300);
             table.uuid('owner').references('user_id').inTable('users').notNullable().onDelete('cascade');
-            table.date('due_date');
+            table.datetime('due_date');
             table.integer('priority').notNullable();
             // This would be better as a boolean "completed"
             table.string('completion_status').notNullable();

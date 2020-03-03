@@ -21,8 +21,8 @@ export default class TaskController extends BaseController {
     @before([stripBearerToken, inject(verifyAuthProvider)])
     async createTask(request: Request): Promise<Response> {
         return this.performOnlyIfUserExists(request, async () => {
-            await this.taskService.createNewTask({ ...request.body, owner: request.user!.id } as CreateTaskDTO);
-            return this.httpHandler.createdOk();
+            const task = await this.taskService.createNewTask({ ...request.body, owner: request.user!.id } as CreateTaskDTO);
+            return this.httpHandler.withDTO(task, 201);
         });
     }
 

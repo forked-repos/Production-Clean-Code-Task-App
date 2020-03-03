@@ -17,12 +17,7 @@ export interface Task {
     name: string;
     description?: string;
     owner: string;
-    dueDate?: string;
+    dueDate?: Date;
     priority: number;
     completionStatus: string;
 }
-
-export const taskFactory = (taskProps: Omit<Task, 'id'>, id?: string): Task => ({
-    id: id ? id : uuid.v4(),
-    ...taskProps
-});

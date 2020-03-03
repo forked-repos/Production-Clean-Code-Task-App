@@ -9,7 +9,7 @@ export default (): IDomainPersistenceMapper<Task, TaskDalEntity> => ({
         name: raw.name,
         description: raw.description,
         owner: raw.owner,
-        dueDate: raw.due_date,
+        dueDate: raw.due_date ? new Date(raw.due_date) : undefined,
         priority: raw.priority,
         completionStatus: raw.completion_status
     }),
@@ -19,7 +19,7 @@ export default (): IDomainPersistenceMapper<Task, TaskDalEntity> => ({
         name: task.name,
         description: task.description,
         owner: task.owner,
-        due_date: task.dueDate,
+        due_date: task.dueDate?.toISOString(),
         priority: task.priority,
         completion_status: task.completionStatus
     })

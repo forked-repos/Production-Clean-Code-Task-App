@@ -12,7 +12,7 @@ import TaskResponseDTO from './../dtos/egress/taskResponseDTO';
 import TaskCollectionResponseDTO from './../dtos/egress/taskCollectionResponseDTO';
 
 // Data
-import { mappers } from './../../tasks/mappers/domain-egress-dto/mappers';
+import { mappers } from '../mappers/domain-dto/mappers';
 import { outboxFactory } from '../../../common/outbox/outbox';
 
 // Domain
@@ -29,7 +29,7 @@ import { OperationalDomain } from '../../../common/app/domains/operationalDomain
 import { TaskEventingChannel } from '../observers/events';
 
 export interface ITaskService {
-    createNewTask(createTaskDTO: CreateTaskDTO): Promise<void>;
+    createNewTask(createTaskDTO: CreateTaskDTO): Promise<TaskResponseDTO>;
     findTasksByOwnerId(ownerId: string): Promise<TaskCollectionResponseDTO>;
     findTaskByIdForOwner(taskId: string, ownerId: string): Promise<TaskResponseDTO>;
     updateTaskByIdForOwner(taskId: string, ownerId: string, updateTaskDTO: UpdateTaskDTO): Promise<void>;
@@ -44,15 +44,16 @@ export default class TaskService implements ITaskService  {
         private readonly dataValidator: IDataValidator,
     ) {}
 
-    public async createNewTask(createTaskDTO: CreateTaskDTO): Promise<void> {
+    public async createNewTask(createTaskDTO: CreateTaskDTO): Promise<TaskResponseDTO> {
+        console.log(createTaskDTO);
         const validationResult = this.dataValidator.validate(TaskValidators.createTask, createTaskDTO);
 
         if (validationResult.isLeft()) 
             return Promise.reject(CommonErrors.ValidationError.create('Tasks', validationResult.value));
 
-        const task: Task = taskFactory(createTaskDTO, this.taskRepository.nextIdentity());
+        const task: Task = mappers.ingress.toTask(createTaskDTO, this.taskRepository.nextIdentity());
 
-        await this.unitOfWorkFactory.createUnderScope(async unitOfWork => {
+        return await this.unitOfWorkFactory.createUnderScope(async (unitOfWork) => {
             const boundTaskRepository = this.taskRepository.forUnitOfWork(unitOfWork);
             const boundOutboxRepository = this.outboxRepository.forUnitOfWork(unitOfWork);
 
@@ -68,17 +69,19 @@ export default class TaskService implements ITaskService  {
             }, this.outboxRepository.nextIdentity()));            
 
             await unitOfWork.commit();
+
+            return this.findTaskByIdForOwner(task.id, task.owner);
         });
     }
 
     public async findTasksByOwnerId(ownerId: string): Promise<TaskCollectionResponseDTO> {
         const tasks = await this.taskRepository.findTasksByOwnerId(ownerId);
-        return mappers.toTaskCollectionResponseDTO(tasks);
+        return mappers.egress.toTaskCollectionResponseDTO(tasks);
     }
 
     public async findTaskByIdForOwner(taskId: string, ownerId: string): Promise<TaskResponseDTO> {
         const task = await this.taskRepository.findTaskByIdForOwner(taskId, ownerId);
-        return mappers.toTaskResponseDTO(task);
+        return mappers.egress.toTaskResponseDTO(task);
     }
 
     public async updateTaskByIdForOwner(taskId: string, ownerId: string, updateTaskDTO: UpdateTaskDTO): Promise<void> {
